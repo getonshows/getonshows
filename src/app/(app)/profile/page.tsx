@@ -157,7 +157,7 @@ export default async function ProfileHomePage() {
                 : "Finish your guest side"}
           </h2>
           <p className="mt-1 text-sm text-slate-700">
-            You switched roles — your existing data is safe. Complete the{" "}
+            You switched roles. Your existing data is safe. Complete the{" "}
             {needsHostModule && needsGuestModule
               ? "host and guest modules"
               : needsHostModule
@@ -281,10 +281,10 @@ export default async function ProfileHomePage() {
             reports involving your account are kept as ID-only records for 12
             months (see the data policy). This cannot be undone.
           </p>
-          <form action={requestDeletion} className="mt-3">
+          <form action={requestDeletion} className="mt-3 scroll-mb-28">
             <button
               type="submit"
-              className="tap-target w-full rounded-xl bg-red-700 px-6 font-semibold text-white hover:bg-red-800"
+              className="tap-target w-full scroll-mb-28 rounded-xl bg-red-700 px-6 font-semibold text-white hover:bg-red-800"
             >
               Yes, delete everything
             </button>

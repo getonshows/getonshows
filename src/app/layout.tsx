@@ -7,7 +7,7 @@ import SourceCapture from "@/components/SourceCapture";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GetOnShows — Get booked. Find guests.",
+  title: "GetOnShows: Get booked. Find guests.",
   description:
     "GetOnShows matches podcast hosts with relevant guests: ranked fits, respectful pitches, booked off-platform.",
   manifest: "/manifest.json",

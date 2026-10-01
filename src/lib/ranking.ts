@@ -16,7 +16,7 @@ import type {
 //
 // topic_similarity uses pgvector cosine similarity when both profiles have
 // embeddings (written by workers/embedder/), and falls back to shared-tag
-// overlap otherwise — so discovery works on day one with no AI running.
+// overlap otherwise, so discovery works on day one with no AI running.
 // Every result carries up to three human-readable reasons traceable to
 // stored profile fields. Audience size is never a ranking signal.
 // ---------------------------------------------------------------------------

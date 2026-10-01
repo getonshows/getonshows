@@ -3,7 +3,7 @@
  *
  * Per the spec, a template prompts the sender to name the episode angle,
  * why it fits, and a proof link. Curly-brace tokens are resolved from
- * profile data; [bracketed] tokens are fill-ins the sender must replace —
+ * profile data; [bracketed] tokens are fill-ins the sender must replace:
  * sending is blocked until every bracket is filled.
  */
 
@@ -28,7 +28,7 @@ export const PITCH_TEMPLATES: PitchTemplate[] = [
     hint: "Lead with the specific topic you'd bring to their show.",
     body: `Hi {theirName},
 
-I'd love to be a guest on {showName} to talk about [episode angle — the specific topic or story I'd bring].
+I'd love to be a guest on {showName} to talk about [episode angle: the specific topic or story I'd bring].
 
 Why it's a fit: [1–2 sentences on why your audience will care].
 
@@ -36,7 +36,7 @@ A bit about me: {myName}, {myTitle}. Proof I can deliver: [link to a past episod
 
 Would you be open to a 15-minute chat next week?
 
-— {myName}`,
+- {myName}`,
   },
   {
     id: "guest-story",
@@ -45,7 +45,7 @@ Would you be open to a 15-minute chat next week?
     hint: "Hook them with a personal story, then the lesson.",
     body: `Hi {theirName},
 
-[The specific problem your audience struggles with] — I learned this the hard way when [brief personal story hook].
+[The specific problem your audience struggles with]. I learned this the hard way when [brief personal story hook].
 
 I'm {myName} ({myTitle}), and I'd love to share [the lesson or framework] with your {showName} listeners.
 
@@ -53,7 +53,7 @@ Recent proof: [link to episode, talk, or press].
 
 Open to exploring this?
 
-— {myName}`,
+- {myName}`,
   },
   {
     id: "host-invite",
@@ -62,13 +62,13 @@ Open to exploring this?
     hint: "A warm, direct invite tied to their expertise.",
     body: `Hi {theirName},
 
-I'm {myName}, host of {myShowName} — [one line on what the show covers].
+I'm {myName}, host of {myShowName}: [one line on what the show covers].
 
 I'd love to have you on to talk about [specific topic tied to their expertise]. Your work on [their notable project or idea] would resonate strongly with our listeners.
 
-Interested? Just reply and we'll find a time — or grab a slot here: [your booking link].
+Interested? Just reply and we'll find a time, or grab a slot here: [your booking link].
 
-— {myName}`,
+- {myName}`,
   },
   {
     id: "host-topic",
@@ -77,13 +77,13 @@ Interested? Just reply and we'll find a time — or grab a slot here: [your book
     hint: "Reference something concrete from their profile.",
     body: `Hi {theirName},
 
-Your perspective on [topic] stood out to me — especially [something specific from their profile].
+Your perspective on [topic] stood out to me, especially [something specific from their profile].
 
 I'm putting together an episode of {myShowName} on [episode angle], and you'd be a perfect guest for it.
 
 Would you be up for a 30-minute recording sometime in the next two weeks?
 
-— {myName}, host of {myShowName}`,
+- {myName}, host of {myShowName}`,
   },
 ];
 

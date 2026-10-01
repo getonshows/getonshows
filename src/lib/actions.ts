@@ -79,14 +79,14 @@ export async function setRole(formData: FormData): Promise<void> {
     .update({ role })
     .eq("id", user.id);
   if (error) throw new Error("Could not save your role. Please try again.");
-  // Intent served its purpose — clear it.
+  // Intent served its purpose; clear it.
   (await cookies()).delete("gos_intent");
   redirect("/profile/builder");
 }
 
 /**
  * Task 0: change role after onboarding. Modules, conversations, and pitches
- * are never deleted by a switch — they stay on file and remain accessible.
+ * are never deleted by a switch; they stay on file and remain accessible.
  * Switching to a role whose module was never started guides the user to the
  * builder (the profile page renders that nudge; no auto-redirect here).
  */
@@ -642,11 +642,11 @@ export async function uploadPhoto(
 }
 
 // ---------------------------------------------------------------------------
-// DATA-01: account deletion — immediate hard purge.
+// DATA-01: account deletion: immediate hard purge.
 // purge_user_data() (SECURITY DEFINER, Sprint 4 migration) snapshots abuse
 // reports into retained_reports, deletes profile photos from storage, then
-// deletes the auth.users row — cascading through users -> profiles ->
-// modules, conversations + messages, blocks, quotas, reads, and events —
+// deletes the auth.users row, cascading through users -> profiles ->
+// modules, conversations + messages, blocks, quotas, reads, and events;
 // and writes the completed deletion_requests audit row. See docs/RETENTION.md
 // for exactly what is deleted immediately vs retained and why.
 // ---------------------------------------------------------------------------
@@ -659,7 +659,7 @@ export async function requestDeletion(): Promise<void> {
       "Could not delete your account right now. Please try again."
     );
   }
-  // The auth user is gone; signOut may fail against the deleted session —
+  // The auth user is gone; signOut may fail against the deleted session,
   // either way the user is logged out and we leave.
   try {
     await supabase.auth.signOut();

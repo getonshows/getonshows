@@ -11,9 +11,9 @@ import ProfileGrid, {
 } from "@/components/landing/ProfileGrid";
 
 export const metadata = {
-  title: "GetOnShows — Get booked on podcasts. Book great guests.",
+  title: "GetOnShows: Get booked on podcasts. Book great guests.",
   description:
-    "GetOnShows matches podcast hosts with guests worth interviewing — based on topics, expertise, format, and real compatibility. Free to join.",
+    "GetOnShows matches podcast hosts with guests worth interviewing, based on topics, expertise, format, and real compatibility. Free to join.",
 };
 
 function SectionHeading({
@@ -78,7 +78,7 @@ const VALUE_PROPS = [
   },
   {
     title: "Understand the match",
-    body: "See why someone fits — shared topics, format, availability — before you contact them.",
+    body: "See why someone fits (shared topics, format, availability) before you contact them.",
     icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18.75 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L22.5 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z",
   },
   {
@@ -166,7 +166,7 @@ const SURPRISES = [
 const FAQS = [
   {
     q: "What kinds of podcasts are on GetOnShows?",
-    a: "Independent shows across technology, business, science, culture, food, and more — hosts looking for guests who will make a great episode, and guests with something worth hearing.",
+    a: "Independent shows across technology, business, science, culture, food, and more: hosts looking for guests who will make a great episode, and guests with something worth hearing.",
   },
   {
     q: "Will my email be exposed?",
@@ -174,7 +174,7 @@ const FAQS = [
   },
   {
     q: "Will I get spammed with pitches?",
-    a: "No. There is no mass messaging — you only hear from people whose profile genuinely fits what you're looking for.",
+    a: "No. There is no mass messaging. You only hear from people whose profile genuinely fits what you're looking for.",
   },
   {
     q: "Is this another pay-to-pitch platform?",
@@ -191,7 +191,7 @@ export default async function LandingPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-navy-900 text-white">
-      {/* Hero — the match, alive */}
+      {/* Hero: the match, alive */}
       <header className="relative overflow-hidden">
         <div
           aria-hidden="true"
@@ -242,7 +242,7 @@ export default async function LandingPage() {
       <Ticker />
 
       <main className="flex-1">
-        {/* The match card — the star of the brand */}
+        {/* The match card: the star of the brand */}
         <section
           aria-labelledby="match-heading"
           className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24"
@@ -250,7 +250,7 @@ export default async function LandingPage() {
           <SectionHeading
             kicker="How matching works"
             title="Every match explains itself."
-            body="No black box. Every introduction shows exactly why these two people should talk — and what they'd talk about."
+            body="No black box. Every introduction shows exactly why these two people should talk, and what they'd talk about."
           />
 
           <Reveal delay={150} className="mt-12">
@@ -323,7 +323,7 @@ export default async function LandingPage() {
                   Potential conversation
                 </p>
                 <p className="mt-2 text-lg font-bold leading-snug">
-                  “What AI can actually do in 2026 — without the hype.”
+                  “What AI can actually do in 2026, without the hype.”
                 </p>
               </div>
 
@@ -358,7 +358,7 @@ export default async function LandingPage() {
             <SectionHeading
               kicker="How it's different"
               title="Better than searching and guessing"
-              body="Directories hand you endless lists — and hours of guessing who might say yes. GetOnShows identifies people who are actually a strong fit, and explains exactly why."
+              body="Directories hand you endless lists, and hours of guessing who might say yes. GetOnShows identifies people who are actually a strong fit, and explains exactly why."
             />
           </div>
           <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2">
@@ -398,7 +398,7 @@ export default async function LandingPage() {
             <SectionHeading
               kicker="For hosts"
               title="Stop searching for guests."
-              body="Tell us the conversations you want to have — the topics, the expertise, the stories. GetOnShows does the searching, and shows you exactly why each person fits."
+              body="Tell us the conversations you want to have: the topics, the expertise, the stories. GetOnShows does the searching, and shows you exactly why each person fits."
             />
           </div>
           <Reveal delay={150} className="mt-10">
@@ -449,7 +449,7 @@ export default async function LandingPage() {
                     Suggested opening message
                   </h3>
                   <p className="mt-2 italic leading-relaxed text-white/80">
-                    “Hi David — I&apos;m recording an episode on what actually
+                    “Hi David, I&apos;m recording an episode on what actually
                     works in carbon markets, beyond the greenwashing debate.
                     Your contrarian take and founder experience would be
                     perfect. Open to a 45-minute remote conversation next
@@ -467,7 +467,7 @@ export default async function LandingPage() {
           </Reveal>
         </section>
 
-        {/* Surprise — the discovery value */}
+        {/* Surprise: the discovery value */}
         <section
           aria-labelledby="surprise-heading"
           className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24"
@@ -530,7 +530,7 @@ export default async function LandingPage() {
             <SectionHeading
               kicker="Why trust it"
               title="Built for real conversations, not follower chasing"
-              body="GetOnShows is where independent podcasters, experts, and creators find each other. Real profiles, real people — no scraped directories, no fake listings, no noise."
+              body="GetOnShows is where independent podcasters, experts, and creators find each other. Real profiles, real people. No scraped directories, no fake listings, no noise."
             />
           </div>
           <Reveal delay={150}>
@@ -596,7 +596,7 @@ export default async function LandingPage() {
                   href="/login"
                   className="tap-target mt-8 inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-brand px-10 py-4 text-lg font-bold text-white transition hover:bg-brand-dark"
                 >
-                  Get started — it&apos;s free
+                  Get started, it&apos;s free
                 </Link>
               </div>
             </div>

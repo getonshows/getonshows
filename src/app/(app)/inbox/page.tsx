@@ -37,7 +37,7 @@ export default async function InboxPage() {
             No conversations yet
           </h2>
           <p className="mx-auto mt-2 max-w-xs text-sm text-slate-500">
-            Find a great match on Discover and send your first pitch — replies
+            Find a great match on Discover and send your first pitch. Replies
             land here.
           </p>
           <Link

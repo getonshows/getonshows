@@ -19,7 +19,7 @@ export type ExampleProfile = {
 
 /**
  * Visual profile cards. The conversation is the unit, not the metadata.
- * Hovering a profile reveals its potential match — and lights up the
+ * Hovering a profile reveals its potential match and lights up the
  * matching card with the brand accent.
  */
 export default function ProfileGrid({

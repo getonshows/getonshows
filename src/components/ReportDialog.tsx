@@ -65,7 +65,7 @@ export default function ReportDialog({
               Report received
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Thanks — we'll review {targetName}'s profile and take action if
+              Thanks. We'll review {targetName}'s profile and take action if
               needed.
             </p>
             <button

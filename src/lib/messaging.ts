@@ -236,7 +236,7 @@ export async function getPitchContext(
     return {
       canPitch: false,
       reason:
-        "Publish your profile before pitching — it's what your pitch will be judged on.",
+        "Publish your profile before pitching. It's what your pitch will be judged on.",
     };
   }
 
@@ -344,7 +344,7 @@ export async function sendPitch(input: {
   const { supabase, user } = await authed();
   const body = input.body.trim();
   if (body.length < 40) {
-    return { ok: false, error: "Your pitch needs at least 40 characters — say what the episode is about." };
+    return { ok: false, error: "Your pitch needs at least 40 characters. Say what the episode is about." };
   }
   if (body.length > 1500) {
     return { ok: false, error: "Keep your pitch under 1,500 characters." };

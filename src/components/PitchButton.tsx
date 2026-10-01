@@ -243,7 +243,7 @@ function PitchComposer({
                 <p className="mb-3 rounded-xl bg-sky/10 px-3 py-2 text-xs text-navy">
                   You have <strong>{quota.remaining}</strong> of {quota.limit} pitches
                   left this week
-                  {quota.remaining === 0 && " — quota resets soon"}.
+                  {quota.remaining === 0 && ", quota resets soon"}.
                 </p>
               )}
 

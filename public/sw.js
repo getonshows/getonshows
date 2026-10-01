@@ -1,4 +1,4 @@
-/* GetOnShows service worker — Sprint 1: cache-first app shell, network-first
+/* GetOnShows service worker: Sprint 1: cache-first app shell, network-first
  * everywhere else. Never block the app if the service worker fails. */
 
 const CACHE = "getonshows-shell-v1";

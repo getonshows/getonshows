@@ -334,7 +334,7 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
       )}
       {state === "booked" && (
         <p className="border-t border-slate-100 pt-3 text-center text-xs font-medium text-teal-700">
-          🎙️ This booking is claimed — check their booking link for next steps.
+          🎙️ This booking is claimed. Check their booking link for next steps.
         </p>
       )}
       {archived && state === "passed" && (

@@ -32,7 +32,7 @@ function Check({ className = "" }: { className?: string }) {
 /**
  * The hero match sequence: two profile cards connected by a waveform,
  * reasons ticking in one by one, then the potential conversation.
- * Plays once when scrolled into view — like the product thinking aloud.
+ * Plays once when scrolled into view, like the product thinking aloud.
  */
 export default function HeroMatch() {
   const ref = useRef<HTMLDivElement>(null);

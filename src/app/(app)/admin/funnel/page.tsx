@@ -35,7 +35,7 @@ function isAdminEmail(email: string | undefined): boolean {
 /**
  * ALL #6: minimal owner-only funnel. Counts per stage and stage-to-stage
  * conversion for the last 30 days, via the funnel_counts() SECURITY DEFINER
- * function (aggregates only — no row-level data leaves the database).
+ * function (aggregates only; no row-level data leaves the database).
  * Non-allowlisted users get a 404. Every view is logged to the event trail.
  */
 export default async function FunnelPage() {
@@ -64,7 +64,7 @@ export default async function FunnelPage() {
         <h1 className="text-2xl font-bold text-navy-900">Funnel</h1>
         <p className="mt-1 text-sm text-slate-600">
           Distinct users per stage, last 30 days. Counts reconcile with the
-          events table — no message bodies, ever.
+          events table; no message bodies, ever.
         </p>
       </header>
 
@@ -90,7 +90,7 @@ export default async function FunnelPage() {
                 prev !== null && prev > 0
                   ? `${Math.round((s.users / prev) * 100)}%`
                   : i === 0
-                    ? "—"
+                    ? "-"
                     : "n/a";
               return (
                 <tr key={s.stage} className="border-b border-slate-100 last:border-0">

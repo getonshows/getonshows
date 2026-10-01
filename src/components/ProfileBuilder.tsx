@@ -7,10 +7,11 @@ import { saveDraft, publishProfile } from "@/lib/actions";
 import { validatePublish } from "@/lib/publish-validation";
 import TopicPicker from "@/components/TopicPicker";
 import PhotoUpload from "@/components/PhotoUpload";
-import AvailabilityGrid, {
+import AvailabilityGrid from "@/components/AvailabilityGrid";
+import {
   summarizeAvailability,
   type AvailabilityValue,
-} from "@/components/AvailabilityGrid";
+} from "@/lib/availability";
 import type {
   BuilderData,
   DraftInput,
@@ -33,13 +34,13 @@ const STEP_TITLES: Record<Step, string> = {
 
 const TIMEZONES: { value: string; label: string }[] = [
   { value: "UTC", label: "UTC" },
-  { value: "America/Toronto", label: "Eastern — Toronto / New York" },
-  { value: "America/Chicago", label: "Central — Chicago" },
-  { value: "America/Denver", label: "Mountain — Denver" },
-  { value: "America/Los_Angeles", label: "Pacific — Los Angeles" },
-  { value: "America/Vancouver", label: "Pacific — Vancouver" },
-  { value: "America/Anchorage", label: "Alaska — Anchorage" },
-  { value: "Pacific/Honolulu", label: "Hawaii — Honolulu" },
+  { value: "America/Toronto", label: "Eastern (Toronto / New York)" },
+  { value: "America/Chicago", label: "Central (Chicago)" },
+  { value: "America/Denver", label: "Mountain (Denver)" },
+  { value: "America/Los_Angeles", label: "Pacific (Los Angeles)" },
+  { value: "America/Vancouver", label: "Pacific (Vancouver)" },
+  { value: "America/Anchorage", label: "Alaska (Anchorage)" },
+  { value: "Pacific/Honolulu", label: "Hawaii (Honolulu)" },
   { value: "Europe/London", label: "London" },
   { value: "Europe/Paris", label: "Paris" },
   { value: "Europe/Berlin", label: "Berlin" },
@@ -424,7 +425,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
         {saveStatus === "saved" &&
           lastSaved &&
           `Draft saved ${lastSaved.toLocaleTimeString()}`}
-        {saveStatus === "error" && "Couldn't save — check your connection."}
+        {saveStatus === "error" && "Couldn't save. Check your connection."}
         {saveStatus === "idle" && "Changes save automatically."}
       </p>
 
@@ -502,7 +503,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
             </div>
             <Field
               label="Weekly availability"
-              hint="Mark the hours you're generally free for recordings, 8 AM–8 PM. Optional — the notes below add context."
+              hint="Mark the hours you're generally free for recordings, 8 AM–8 PM. Optional. The notes below add context."
             >
               <AvailabilityGrid
                 value={draft.availability}
@@ -639,7 +640,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
             <Field
               label="Guest criteria"
               required
-              hint="Who is a great guest for your show — and who isn't?"
+              hint="Who is a great guest for your show, and who isn't?"
             >
               <TextArea
                 value={draft.host.guestCriteria}
@@ -652,7 +653,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
             <Field
               label="Conversations you want to have"
               required
-              hint="Describe the episodes you want to make — GetOnShows matches you with guests who fit."
+              hint="Describe the episodes you want to make. GetOnShows matches you with guests who fit."
             >
               <TextArea
                 value={draft.host.guestBrief}
@@ -799,12 +800,12 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
                     <dd className="text-navy-900">
                       {draft.timezone
                         ? (TIMEZONES.find((t) => t.value === draft.timezone)?.label ?? draft.timezone)
-                        : "—"}
+                        : "-"}
                     </dd>
                   </div>
                   <div className="flex gap-2">
                     <dt className="font-medium text-slate-500">Availability</dt>
-                    <dd className="text-navy-900">{summary ?? "—"}</dd>
+                    <dd className="text-navy-900">{summary ?? "-"}</dd>
                   </div>
                 </dl>
               );
@@ -839,7 +840,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
                 </button>
               </section>
             ) : (
-              <section className="rounded-2xl bg-brand-light p-5 ring-1 ring-brand/30">
+              <section className="scroll-mb-28 rounded-2xl bg-brand-light p-5 ring-1 ring-brand/30">
                 <h2 className="text-lg font-semibold text-navy-900">
                   Ready to publish
                 </h2>
@@ -877,7 +878,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
               {publishing ? "Publishing…" : "Publish my profile"}
             </button>
             <p className="text-center text-sm text-slate-500">
-              Your profile stays a draft — invisible to others — until you
+              Your profile stays a draft (invisible to others) until you
               publish.
             </p>
           </div>
@@ -885,7 +886,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
       </div>
 
       {step !== "review" && (
-        <div className="mt-8 flex gap-3">
+        <div className="mt-8 flex scroll-mb-28 gap-3">
           {stepIndex > 0 && (
             <button
               type="button"

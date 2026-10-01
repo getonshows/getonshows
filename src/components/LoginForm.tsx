@@ -112,11 +112,11 @@ export default function LoginForm({ intent }: { intent: string | null }) {
     if (msg.includes("invalid login credentials"))
       return "Incorrect email or password. Try again or create an account.";
     if (msg.includes("user already registered") || msg.includes("already exists"))
-      return "An account with this email already exists — sign in instead.";
+      return "An account with this email already exists. Sign in instead.";
     if (msg.includes("password"))
       return "Password must be at least 6 characters.";
     if (msg.includes("email not confirmed"))
-      return "Please confirm your email first — check your inbox for the link.";
+      return "Please confirm your email first. Check your inbox for the link.";
     return "Something went wrong. Please try again.";
   }
 
@@ -198,7 +198,7 @@ export default function LoginForm({ intent }: { intent: string | null }) {
             <h2 className="font-semibold text-navy-900">Check your inbox</h2>
             <p className="mt-1 text-slate-700">
               We sent a sign-in link to <strong>{email.trim()}</strong>. It
-              expires soon and works once — open it on this device. Don&apos;t
+              expires soon and works once. Open it on this device. Don&apos;t
               see it? Check your spam or promotions folder.
             </p>
             <button

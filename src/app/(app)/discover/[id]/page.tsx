@@ -47,7 +47,7 @@ export default async function DiscoverProfilePage({
   if ((blockHit ?? []).length > 0) notFound();
 
   // Funnel: one-sheet opened from Discover (never for self-views).
-  // Fire-and-forget — analytics must not break the page.
+  // Fire-and-forget: analytics must not break the page.
   if (searchParams.from === "discover" && p.user_id !== user.id) {
     void logServerEvent(supabase, user.id, "match_opened", {
       target_profile_id: p.id,
@@ -111,7 +111,7 @@ export default async function DiscoverProfilePage({
             className="w-full py-3 text-base"
           />
           <p className="mt-2 text-xs text-slate-500">
-            3 pitches per week — make each one count.
+            3 pitches per week. Make each one count.
           </p>
         </div>
       )}

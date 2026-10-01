@@ -98,7 +98,7 @@ export default async function DiscoverPage({
         <h1 className="text-2xl font-bold text-navy-900">Discover</h1>
         <EmptyState
           title="Build your profile first"
-          body="Matching ranks other profiles against yours — your topics, format, and bio are what make the scores meaningful."
+          body="Matching ranks other profiles against yours: your topics, format, and bio are what make the scores meaningful."
           action={
             <Link
               href="/profile/builder"
@@ -268,7 +268,7 @@ export default async function DiscoverPage({
           body={
             filtersActive
               ? "No published profiles match those filters. Broaden them to see more."
-              : "No published profiles on this side yet. Check back soon — or invite a podcaster you know."
+              : "No published profiles on this side yet. Check back soon, or invite a podcaster you know."
           }
         />
       ) : (

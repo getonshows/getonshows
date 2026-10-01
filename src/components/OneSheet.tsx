@@ -4,7 +4,7 @@ import type {
   ProfileRow,
   TopicRow,
 } from "@/lib/types";
-import { summarizeAvailability } from "@/components/AvailabilityGrid";
+import { summarizeAvailability } from "@/lib/availability";
 
 function Section({
   title,
@@ -46,7 +46,7 @@ function LinkList({ links }: { links: { label: string; url: string }[] }) {
 
 /**
  * Renders a published profile as a professional one-sheet:
- * identity, topics, modules, links — no dating-card vibes.
+ * identity, topics, modules, links; no dating-card vibes.
  */
 export default function OneSheet({
   profile,

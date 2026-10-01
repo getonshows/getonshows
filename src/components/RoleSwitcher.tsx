@@ -24,7 +24,7 @@ const OPTIONS = [
 
 /**
  * Task 0: role switching. Server-validated; switching never deletes
- * profiles, conversations, or pitches — they stay on file and accessible.
+ * profiles, conversations, or pitches: they stay on file and accessible.
  */
 export default function RoleSwitcher({
   currentRole,
@@ -48,7 +48,7 @@ export default function RoleSwitcher({
       }
       setNotice(
         value === "dual"
-          ? "You're now both — the Guests / Shows toggle is live on Discover."
+          ? "You're now both. The Guests / Shows toggle is live on Discover."
           : `You're now a ${value}. Your existing profiles, threads, and pitches are untouched.`
       );
       router.refresh();

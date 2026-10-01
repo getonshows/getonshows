@@ -22,7 +22,7 @@ export default function AppError({
           Something went wrong
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          We couldn't load this screen. Your data is safe — this is usually a
+          We couldn't load this screen. Your data is safe. This is usually a
           connection hiccup.
         </p>
         <button
