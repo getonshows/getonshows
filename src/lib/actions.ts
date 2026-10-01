@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { logServerEvent } from "@/lib/messaging";
 import { validatePublish, isUrl } from "@/lib/publish-validation";
@@ -78,6 +79,8 @@ export async function setRole(formData: FormData): Promise<void> {
     .update({ role })
     .eq("id", user.id);
   if (error) throw new Error("Could not save your role. Please try again.");
+  // Intent served its purpose — clear it.
+  (await cookies()).delete("gos_intent");
   redirect("/profile/builder");
 }
 
