@@ -10,20 +10,24 @@ Sprint 1 is verified locally. This is the path to a public link
 
 ## 1. Push the repo to GitHub
 Create a new **empty** repo on github.com named `getonshows` (no README, no .gitignore),
-then:
+then (the zip ships without git history, so init first):
 ```bash
-cd <unzipped-folder>/getonshows
+cd <unzipped-sprint-folder>
+git init -b main
+git add .
+git commit -m "GetOnShows"
 git remote add origin git@github.com:<your-username>/getonshows.git
-git push -u origin master
+git push -u origin main
 ```
 (`.env.local` is already gitignored — your keys will not be pushed.)
 
 ## 2. Import into Vercel
 1. vercel.com → **Add New… → Project** → **Import** the `getonshows` repo.
 2. Framework preset is auto-detected as Next.js — leave build settings as-is.
-3. Under **Environment Variables**, add both (apply to Production, Preview, Development):
+3. Under **Environment Variables**, add all three (apply to Production, Preview, Development):
    - `NEXT_PUBLIC_SUPABASE_URL` = `https://tqrjlqxdrblbcqppkecb.supabase.co`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = your anon public key (the one starting `sb_publishable_…`)
+   - `ADMIN_EMAILS` = your login email (gates the /admin/funnel dashboard)
 4. **Deploy.** You'll get a `getonshows-*.vercel.app` link in ~2 minutes.
 
 ## 3. Point getonshows.com at Vercel
@@ -36,7 +40,8 @@ git push -u origin master
 ## 4. Flip Supabase to the live domain
 Supabase dashboard → **Authentication → URL Configuration**:
 - **Site URL** → `https://getonshows.com`
-- **Redirect URLs** → keep `http://localhost:3000` AND add `https://getonshows.com`
+- **Redirect URLs** → add `https://getonshows.com/auth/callback` (the app builds this
+  URL dynamically from the domain; keep `http://localhost:3000/auth/callback` too for local dev)
 - Without this, magic-link emails still point at localhost.
 
 ## 5. Smoke-test the live loop
