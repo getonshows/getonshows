@@ -170,7 +170,8 @@ export default function LoginPage() {
             <h2 className="font-semibold text-navy-900">Check your inbox</h2>
             <p className="mt-1 text-slate-700">
               We sent a sign-in link to <strong>{email.trim()}</strong>. It
-              expires soon and works once — open it on this device.
+              expires soon and works once — open it on this device. Don't
+              see it? Check your spam or promotions folder.
             </p>
             <button
               type="button"
@@ -274,7 +275,8 @@ export default function LoginPage() {
               <p className="mt-1 text-sm text-slate-600">
                 We sent a confirmation link to{" "}
                 <strong>{pwEmail.trim()}</strong>. Click it, then sign in with
-                your new password.
+                your new password. Don't see it? Check your spam or
+                promotions folder.
               </p>
               <button
                 type="button"
