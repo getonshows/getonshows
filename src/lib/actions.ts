@@ -653,6 +653,22 @@ export async function uploadPhoto(
 
 export async function requestDeletion(): Promise<void> {
   const { supabase, user } = await authed();
+  // Remove profile photos via the Storage API first: Supabase forbids direct
+  // SQL deletes on storage.objects, so the purge function cannot do it.
+  // Best effort: the account purge below is the critical part.
+  try {
+    const { data: files } = await supabase.storage
+      .from("profile-photos")
+      .list(user.id);
+    const paths = (files ?? [])
+      .filter((f) => f.name && !f.name.startsWith("."))
+      .map((f) => `${user.id}/${f.name}`);
+    if (paths.length > 0) {
+      await supabase.storage.from("profile-photos").remove(paths);
+    }
+  } catch {
+    /* storage cleanup failed; continue with the account purge */
+  }
   const { error } = await supabase.rpc("purge_user_data");
   if (error) {
     throw new Error(
