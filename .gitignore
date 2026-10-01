@@ -22,3 +22,4 @@ supabase/.temp/
 __pycache__/
 *.pyc
 workers/embedder/.env
+tsconfig.tsbuildinfo

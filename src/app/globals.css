@@ -12,7 +12,7 @@ body {
 
 /* Visible keyboard focus everywhere (accessibility baseline) */
 :focus-visible {
-  outline: 2px solid #0e9384;
+  outline: 2px solid #FF5A36;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -31,4 +31,100 @@ body {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ---------- GetOnShows landing motion ---------- */
+
+/* Conversation ticker */
+@keyframes ticker-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 40s linear infinite;
+}
+.ticker-mask:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+/* Scroll-triggered reveal (used by <Reveal/>) */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Hero match sequence steps */
+.hero-step {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.65s ease,
+    transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, transform;
+}
+.hero-step.on {
+  opacity: 1;
+  transform: none;
+}
+
+/* Match-percentage pop */
+@keyframes hero-pop {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.pct-pop {
+  animation: hero-pop 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) 0.45s both;
+}
+
+/* Gently "breathing" waveform bars (hero only) */
+@keyframes wave-breathe {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.wave-animated rect {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wave-breathe 2.4s ease-in-out infinite;
 }

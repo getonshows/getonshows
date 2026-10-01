@@ -1,6 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import HeroMatch from "@/components/landing/HeroMatch";
+import Ticker from "@/components/landing/Ticker";
+import Waveform from "@/components/landing/Waveform";
+import Reveal from "@/components/landing/Reveal";
+import ProfileGrid, {
+  type ExampleProfile,
+} from "@/components/landing/ProfileGrid";
+
+export const metadata = {
+  title: "GetOnShows — Get booked on podcasts. Book great guests.",
+  description:
+    "GetOnShows matches podcast hosts with guests worth interviewing — based on topics, expertise, format, and real compatibility. Free to join.",
+};
 
 function SectionHeading({
   kicker,
@@ -12,68 +26,140 @@ function SectionHeading({
   body?: string;
 }) {
   return (
-    <div>
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
-        {kicker}
-      </p>
-      <h2 className="mt-2 text-2xl font-bold">{title}</h2>
-      {body && <p className="mt-2 text-navy-100">{body}</p>}
+    <div className="mx-auto max-w-2xl text-center">
+      <Reveal>
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-brand">
+          {kicker}
+        </p>
+      </Reveal>
+      <Reveal delay={100}>
+        <h2 className="mt-3 text-3xl font-extrabold leading-tight sm:text-4xl">
+          {title}
+        </h2>
+      </Reveal>
+      {body && (
+        <Reveal delay={200}>
+          <p className="mt-3 text-lg text-white/60">{body}</p>
+        </Reveal>
+      )}
     </div>
   );
 }
 
-const MATCH_REASONS = [
-  "Shared topic: artificial intelligence",
-  "Long-form conversational format",
-  "Toronto-area recording",
-  "Guest has published work on AI adoption",
-  "Host recently recorded episodes about technology",
-  "Both prefer in-person interviews",
+function Check({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+const CARD_REASONS = [
+  "AI & future of work",
+  "Long-form conversation",
+  "In-person · Toronto",
+  "Guest has relevant published work",
 ];
 
 const VALUE_PROPS = [
   {
     title: "Find relevant people",
     body: "Not massive directories. A short list of people who actually fit what you're making.",
+    icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z",
   },
   {
     title: "Understand the match",
     body: "See why someone fits — shared topics, format, availability — before you contact them.",
+    icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18.75 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L22.5 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z",
   },
   {
     title: "Send thoughtful pitches",
     body: "Thoughtful first messages. No mass messaging, no inbox spam.",
+    icon: "M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5",
   },
   {
     title: "Book however you already work",
     body: "Interested? Take it to your calendar, your email, whatever you prefer.",
+    icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5",
   },
 ];
 
-const EXAMPLE_PROFILES = [
+const EXAMPLE_PROFILES: ExampleProfile[] = [
   {
+    id: "besquare",
     kind: "Host",
     name: "BeSquare by pSquare",
-    meta: "Long-form conversation • In person & remote • Toronto",
-    tags: ["Technology", "Business", "Science"],
+    role: "Podcast",
+    location: "Toronto",
+    image: "/examples/besquare-cover.jpg",
+    tags: ["AI", "Science", "Business"],
+    hook: "What happens when AI stops being a tool and starts doing parts of your job?",
+    matchId: "jane-smith",
+    matchName: "Dr. Jane Smith",
+    matchImage: "/examples/jane-smith.jpg",
   },
   {
+    id: "jane-smith",
     kind: "Guest",
     name: "Dr. Jane Smith",
-    meta: "AI researcher • Toronto",
+    role: "AI researcher",
+    location: "Toronto",
+    image: "/examples/jane-smith.jpg",
     tags: ["Machine learning", "Future of work", "AI agents"],
+    hook: "Will AI replace knowledge workers, or make them dramatically more powerful?",
+    matchId: "besquare",
+    matchName: "BeSquare by pSquare",
+    matchImage: "/examples/besquare-cover.jpg",
   },
   {
+    id: "founder-files",
     kind: "Host",
     name: "The Founder Files",
-    meta: "Weekly interview • Remote",
+    role: "Podcast",
+    location: "Remote",
+    image: "/examples/founder-files-cover.jpg",
     tags: ["Startups", "Venture capital"],
+    hook: "Why do most startups die of indifference, not competition?",
+    matchId: "david-okafor",
+    matchName: "David Okafor",
+    matchImage: "/examples/david-okafor.jpg",
   },
   {
+    id: "marcus-chen",
     kind: "Guest",
     name: "Marcus Chen",
-    meta: "Chef & food writer • Vancouver",
+    role: "Chef & food writer",
+    location: "Vancouver",
+    image: "/examples/marcus-chen.jpg",
     tags: ["Food culture", "Restaurants"],
+    hook: "What does running a kitchen teach you about running anything?",
+    matchId: "besquare",
+    matchName: "BeSquare by pSquare",
+    matchImage: "/examples/besquare-cover.jpg",
+  },
+];
+
+const SURPRISES = [
+  {
+    pairing: "A neuroscientist × a founder podcast",
+    why: "Their research on decision-making could completely change a conversation about entrepreneurship.",
+  },
+  {
+    pairing: "A Great Lakes researcher × a business show",
+    why: "Their work reveals the economics behind shoreline development and water quality.",
+  },
+  {
+    pairing: "A hospice nurse × a business show",
+    why: "Nobody understands what people value at the end of life. That's a conversation about success no CEO interview can deliver.",
   },
 ];
 
@@ -94,14 +180,6 @@ const FAQS = [
     q: "Is this another pay-to-pitch platform?",
     a: "No. Joining is free, and there is never a fee to send or receive a pitch.",
   },
-  {
-    q: "How does matching work?",
-    a: "We look at topic overlap, expertise, show format, location, availability, and what each person is actually looking for — not follower counts. Every suggestion explains itself.",
-  },
-  {
-    q: "What kinds of shows are here?",
-    a: "Independent podcasts across technology, business, science, culture, food, and more. Built first for independent podcasters, experts, and creators.",
-  },
 ];
 
 export default async function LandingPage() {
@@ -113,103 +191,209 @@ export default async function LandingPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-navy-900 text-white">
-      {/* Hero */}
-      <header className="mx-auto w-full max-w-2xl px-6 pb-12 pt-14 text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
-          GetOnShows
-        </p>
-        <h1 className="mt-6 text-4xl font-bold leading-tight sm:text-5xl">
-          Find podcasts worth appearing on.
-          <br />
-          Find guests worth interviewing.
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-navy-100">
-          GetOnShows helps podcast hosts and interesting people discover each
-          other based on topics, expertise, format, and real compatibility —
-          not follower counts.
-        </p>
-        <div className="mx-auto mt-8 grid max-w-lg gap-3 sm:grid-cols-2">
-          <Link
-            href="/login?intent=guest"
-            className="tap-target inline-flex items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white transition hover:bg-brand-dark"
-          >
-            Find podcasts
-          </Link>
-          <Link
-            href="/login?intent=host"
-            className="tap-target inline-flex items-center justify-center rounded-xl bg-white/10 px-6 font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20"
-          >
-            Find guests
-          </Link>
+      {/* Hero — the match, alive */}
+      <header className="relative overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+        >
+          <div className="absolute -top-32 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-brand/15 blur-3xl" />
+          <div className="absolute -left-24 top-48 h-64 w-64 rounded-full bg-[#FF8A5C]/10 blur-3xl" />
+          <div className="absolute -right-24 top-72 h-64 w-64 rounded-full bg-brand/10 blur-3xl" />
         </div>
-        <p className="mt-4 text-sm text-navy-200">
-          Free to join. No credit card.
-        </p>
+        <div className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-16 text-center sm:pt-24">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand">
+            GetOnShows
+          </p>
+          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-tight sm:text-6xl">
+            Find podcasts{" "}
+            <span className="bg-gradient-to-r from-[#FFB59E] via-[#FF7A59] to-brand bg-clip-text text-transparent">
+              worth appearing on.
+            </span>
+            <br />
+            Find guests{" "}
+            <span className="bg-gradient-to-r from-[#FFB59E] via-[#FF7A59] to-brand bg-clip-text text-transparent">
+              worth interviewing.
+            </span>
+          </h1>
+
+          <HeroMatch />
+
+          <div className="mx-auto mt-10 grid max-w-lg gap-3 sm:grid-cols-2">
+            <Link
+              href="/login?intent=guest"
+              className="tap-target inline-flex items-center justify-center rounded-xl bg-brand px-6 font-bold text-white transition hover:bg-brand-dark"
+            >
+              Find podcasts
+            </Link>
+            <Link
+              href="/login?intent=host"
+              className="tap-target inline-flex items-center justify-center rounded-xl bg-white/10 px-6 font-bold text-white ring-1 ring-white/25 transition hover:bg-white/20"
+            >
+              Find guests
+            </Link>
+          </div>
+          <p className="mt-4 text-sm text-white/50">
+            Free to join. No credit card.
+          </p>
+        </div>
       </header>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 pb-16">
-        {/* Match example */}
-        <section aria-labelledby="match-heading" className="mt-4">
+      <Ticker />
+
+      <main className="flex-1">
+        {/* The match card — the star of the brand */}
+        <section
+          aria-labelledby="match-heading"
+          className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24"
+        >
           <SectionHeading
-            kicker="See it work"
-            title="Every match explains itself"
+            kicker="How matching works"
+            title="Every match explains itself."
+            body="No black box. Every introduction shows exactly why these two people should talk — and what they'd talk about."
           />
-          <div className="mt-4 rounded-2xl bg-navy-800 p-6 ring-1 ring-white/10">
-            <div className="flex items-center justify-between">
+
+          <Reveal delay={150} className="mt-12">
+            <div className="relative mx-auto max-w-xl rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_90px_-24px_rgba(255,90,54,0.4)] sm:p-10">
               <p
                 id="match-heading"
-                className="text-sm font-bold uppercase tracking-[0.15em] text-brand"
+                className="text-center text-xs font-extrabold uppercase tracking-[0.3em] text-brand"
               >
-                92% match
+                Strong match
               </p>
-              <p className="text-xs text-navy-300">Illustrative example</p>
-            </div>
-            <p className="mt-2 text-lg font-semibold">
-              BeSquare by pSquare <span aria-hidden="true">↔</span> Dr. Jane
-              Smith
-            </p>
-            <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
-              Why this is a strong match
-            </h3>
-            <ul className="mt-2 space-y-1.5">
-              {MATCH_REASONS.map((r) => (
-                <li key={r} className="flex items-start gap-2 text-navy-100">
-                  <span aria-hidden="true" className="font-bold text-brand">
-                    ✓
+
+              <div className="mt-8 flex items-start justify-between gap-4">
+                <div className="flex flex-1 flex-col items-center text-center">
+                  <Image
+                    src="/examples/besquare-cover.jpg"
+                    alt="BeSquare podcast artwork"
+                    width={192}
+                    height={192}
+                    className="h-20 w-20 rounded-2xl object-cover ring-1 ring-white/20 sm:h-24 sm:w-24"
+                  />
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
+                    Host
+                  </p>
+                  <p className="font-bold">BeSquare</p>
+                  <p className="mt-0.5 text-xs text-white/50">
+                    AI · Science · Business
+                  </p>
+                </div>
+                <div className="flex flex-1 flex-col items-center text-center">
+                  <Image
+                    src="/examples/jane-smith.jpg"
+                    alt="Dr. Jane Smith"
+                    width={192}
+                    height={192}
+                    className="h-20 w-20 rounded-full object-cover ring-1 ring-white/20 sm:h-24 sm:w-24"
+                  />
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
+                    Guest
+                  </p>
+                  <p className="font-bold">Dr. Jane Smith</p>
+                  <p className="mt-0.5 text-xs text-white/50">
+                    AI researcher · Toronto
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-7 flex items-center gap-3 sm:gap-4">
+                <Waveform bars={28} className="h-7 min-w-0 flex-1 text-brand/60" />
+                <span className="shrink-0 rounded-full border border-brand/50 bg-brand/15 px-4 py-1.5 text-lg font-extrabold text-brand">
+                  92%
+                </span>
+                <Waveform bars={28} className="h-7 min-w-0 flex-1 text-brand/60" />
+              </div>
+
+              <ul className="space-y-2.5" aria-label="Why this is a strong match">
+                {CARD_REASONS.map((r, i) => (
+                  <Reveal key={r} as="li" delay={i * 130}>
+                    <span className="flex items-center gap-3 text-sm text-white/85 sm:text-base">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/15">
+                        <Check className="h-3.5 w-3.5 text-brand" />
+                      </span>
+                      {r}
+                    </span>
+                  </Reveal>
+                ))}
+              </ul>
+
+              <div className="mt-7 rounded-2xl bg-navy-950/70 p-5 ring-1 ring-white/10">
+                <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/40">
+                  Potential conversation
+                </p>
+                <p className="mt-2 text-lg font-bold leading-snug">
+                  “What AI can actually do in 2026 — without the hype.”
+                </p>
+              </div>
+
+              <div className="mt-7 text-center">
+                <Link
+                  href="/login?intent=guest"
+                  className="group/btn tap-target inline-flex items-center justify-center rounded-xl bg-brand px-8 py-3.5 font-bold text-white transition hover:bg-brand-dark"
+                >
+                  <span className="grid">
+                    <span className="col-start-1 row-start-1 transition-opacity duration-200 group-hover/btn:opacity-0">
+                      Find my matches
+                    </span>
+                    <span className="col-start-1 row-start-1 whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover/btn:opacity-100">
+                      Show me who I should talk to →
+                    </span>
                   </span>
-                  {r}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 rounded-xl bg-navy-900/60 p-4 ring-1 ring-white/10">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
-                Suggested conversation
-              </h3>
-              <p className="mt-1 italic text-navy-100">
-                “What happens when AI stops being a tool and starts doing
-                parts of your job?”
-              </p>
+                </Link>
+                <p className="mt-3 text-xs text-white/30">
+                  Illustrative example
+                </p>
+              </div>
             </div>
-            <div className="mt-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
-                Proof of expertise
-              </h3>
-              <p className="mt-1 text-navy-100">
-                Published articles on AI adoption • Conference speaker •
-                Cited in industry research
-              </p>
-            </div>
-            <Link
-              href="/login"
-              className="tap-target mt-5 inline-flex w-full items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white transition hover:bg-brand-dark"
-            >
-              Find your matches
-            </Link>
+          </Reveal>
+        </section>
+
+        {/* Value props */}
+        <section
+          aria-labelledby="better-heading"
+          className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-20"
+        >
+          <div id="better-heading">
+            <SectionHeading
+              kicker="How it's different"
+              title="Better than searching and guessing"
+              body="Directories hand you endless lists — and hours of guessing who might say yes. GetOnShows identifies people who are actually a strong fit, and explains exactly why."
+            />
+          </div>
+          <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2">
+            {VALUE_PROPS.map((v, i) => (
+              <Reveal key={v.title} delay={i * 100}>
+                <div className="h-full rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-white/25">
+                  <div className="inline-flex rounded-xl bg-brand/15 p-2.5">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.8}
+                      className="h-6 w-6 text-brand"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d={v.icon}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold">{v.title}</h3>
+                  <p className="mt-1.5 text-white/60">{v.body}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </section>
 
         {/* Host promise */}
-        <section aria-labelledby="host-promise-heading" className="mt-14">
+        <section
+          aria-labelledby="host-promise-heading"
+          className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-20"
+        >
           <div id="host-promise-heading">
             <SectionHeading
               kicker="For hosts"
@@ -217,135 +401,131 @@ export default async function LandingPage() {
               body="Tell us the conversations you want to have — the topics, the expertise, the stories. GetOnShows does the searching, and shows you exactly why each person fits."
             />
           </div>
-          <div className="mt-4 rounded-2xl bg-navy-800 p-6 ring-1 ring-white/10">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold uppercase tracking-[0.15em] text-brand">
-                Your brief
-              </p>
-              <p className="text-xs text-navy-300">Illustrative example</p>
-            </div>
-            <p className="mt-2 italic text-navy-100">
-              “I&apos;m looking for people near Toronto with unusual
-              expertise, meaningful personal stories, new research, or strong
-              ideas around AI, science, business, and society. Prefer
-              in-person conversations.”
-            </p>
-            <div className="mt-5 border-t border-white/10 pt-5">
-              <p className="text-lg font-semibold">
-                Myles Harrison{" "}
-                <span className="ml-1 rounded-full bg-brand/20 px-3 py-0.5 text-sm font-bold text-brand">
-                  Strong match
-                </span>
-              </p>
-              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
-                Why he fits
-              </h3>
-              <p className="mt-1 text-navy-100">
-                AI practitioner, Toronto-area, comfortable discussing LLMs
-                and agents, founder perspective, suited to long-form
-                conversation.
-              </p>
-              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
-                Potential episode
-              </h3>
-              <p className="mt-1 font-semibold text-white">
-                “What AI Can Actually Do in 2026, Without the Hype”
-              </p>
-              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
-                Why your audience might care
-              </h3>
-              <p className="mt-1 text-navy-100">
-                Agents, disappearing knowledge work, what businesses
-                misunderstand about LLMs.
-              </p>
-              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
-                Evidence
-              </h3>
-              <p className="mt-1 text-navy-100">3 relevant links.</p>
-              <div className="mt-4 rounded-xl bg-navy-900/60 p-4 ring-1 ring-white/10">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
-                  Suggested opening message
-                </h3>
-                <p className="mt-1 italic text-navy-100">
-                  “Hi Myles — I&apos;m recording an episode on what AI can
-                  actually do in 2026, without the hype. Your work on LLM
-                  agents plus the founder perspective would be perfect.
-                  Open to a 45-minute conversation next week?”
+          <Reveal delay={150} className="mt-10">
+            <div className="mx-auto max-w-2xl rounded-3xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-brand">
+                  Your brief
                 </p>
+                <p className="text-xs text-white/30">Illustrative example</p>
               </div>
-            </div>
-            <Link
-              href="/login?intent=host"
-              className="tap-target mt-5 inline-flex w-full items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white transition hover:bg-brand-dark"
-            >
-              Find guests
-            </Link>
-          </div>
-        </section>
-
-        {/* Value props */}
-        <section aria-labelledby="better-heading" className="mt-14">
-          <div id="better-heading">
-            <SectionHeading
-              kicker="How it's different"
-              title="Better than cold outreach"
-              body="Google, LinkedIn, and Facebook groups hand you endless lists — and hours of guessing who might say yes. GetOnShows doesn't give you a directory. We identify people who are actually a strong fit, and explain exactly why."
-            />
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {VALUE_PROPS.map((v) => (
-              <div
-                key={v.title}
-                className="rounded-2xl bg-navy-800 p-5 ring-1 ring-white/10"
+              <p className="mt-3 text-lg italic leading-relaxed text-white/85">
+                “I&apos;m looking for founders and researchers with contrarian
+                takes on AI, climate tech, and the future of work. Prefer
+                remote conversations, around 45 minutes.”
+              </p>
+              <div className="mt-6 border-t border-white/10 pt-6">
+                <div className="flex items-center gap-4">
+                  <Image
+                    src="/examples/david-okafor.jpg"
+                    alt="David Okafor"
+                    width={128}
+                    height={128}
+                    className="h-16 w-16 rounded-full object-cover ring-1 ring-white/15"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-lg font-bold">David Okafor</p>
+                    <span className="mt-1 inline-block whitespace-nowrap rounded-full border border-brand/40 bg-brand/10 px-3 py-0.5 text-sm font-bold text-brand">
+                      Strong match
+                    </span>
+                  </div>
+                </div>
+                <h3 className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-white/40">
+                  Why he fits
+                </h3>
+                <p className="mt-1.5 text-white/75">
+                  Climate-tech founder, has spoken publicly about carbon
+                  markets, comfortable with debate, suited to 45-minute remote
+                  conversation.
+                </p>
+                <h3 className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-white/40">
+                  Potential episode
+                </h3>
+                <p className="mt-1.5 text-xl font-bold leading-snug">
+                  “Carbon Offsets Are Broken. Here&apos;s What Actually Works.”
+                </p>
+                <div className="mt-5 rounded-2xl bg-navy-950/70 p-5 ring-1 ring-white/10">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">
+                    Suggested opening message
+                  </h3>
+                  <p className="mt-2 italic leading-relaxed text-white/80">
+                    “Hi David — I&apos;m recording an episode on what actually
+                    works in carbon markets, beyond the greenwashing debate.
+                    Your contrarian take and founder experience would be
+                    perfect. Open to a 45-minute remote conversation next
+                    week?”
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/login?intent=host"
+                className="tap-target mt-6 inline-flex w-full items-center justify-center rounded-xl bg-brand px-6 py-3.5 font-bold text-white transition hover:bg-brand-dark"
               >
-                <h3 className="font-semibold">{v.title}</h3>
-                <p className="mt-1 text-sm text-navy-100">{v.body}</p>
-              </div>
-            ))}
-          </div>
+                Find guests
+              </Link>
+            </div>
+          </Reveal>
         </section>
 
-        {/* How matching works */}
-        <section aria-labelledby="how-heading" className="mt-14">
-          <div id="how-heading">
+        {/* Surprise — the discovery value */}
+        <section
+          aria-labelledby="surprise-heading"
+          className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24"
+        >
+          <div id="surprise-heading">
             <SectionHeading
-              kicker="How matching works"
-              title="Discover your strongest matches"
-              body="We look at topic overlap, expertise, show format, location, availability, and what each person is actually looking for — not follower counts, fame, or money. Every suggestion shows its work, so you know exactly why it fits."
+              kicker="The discovery engine"
+              title="You wouldn't have searched for them."
+              body="Google finds who you're already looking for. GetOnShows finds the person you didn't know you should be looking for."
             />
+          </div>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {SURPRISES.map((s, i) => (
+              <Reveal key={s.pairing} delay={i * 130}>
+                <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-brand/40">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-brand">
+                    Unexpected match
+                  </p>
+                  <p className="mt-3 text-lg font-bold leading-snug">
+                    {s.pairing}
+                  </p>
+                  <Waveform
+                    bars={24}
+                    className="my-5 h-5 w-full text-brand/40"
+                  />
+                  <p className="text-sm font-bold text-white/80">Why?</p>
+                  <p className="mt-1.5 leading-relaxed text-white/60">{s.why}</p>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </section>
 
         {/* Example profiles */}
-        <section aria-labelledby="profiles-heading" className="mt-14">
+        <section
+          aria-labelledby="profiles-heading"
+          className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-20"
+        >
           <div id="profiles-heading">
             <SectionHeading
               kicker="The network"
-              title="Example profiles"
-              body="A taste of who's here."
+              title="Here's what a GetOnShows profile looks like."
+              body="Real people, real conversations. Hover a profile to see who they'd match with."
             />
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {EXAMPLE_PROFILES.map((p) => (
-              <article
-                key={p.name}
-                className="rounded-2xl bg-navy-800 p-5 ring-1 ring-white/10"
-              >
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand">
-                  {p.kind}
-                </p>
-                <h3 className="mt-1 font-semibold">{p.name}</h3>
-                <p className="mt-1 text-sm text-navy-200">{p.meta}</p>
-                <p className="mt-2 text-sm text-navy-100">
-                  {p.tags.join(" • ")}
-                </p>
-              </article>
-            ))}
-          </div>
+          <Reveal delay={150} className="mt-10">
+            <ProfileGrid profiles={EXAMPLE_PROFILES} />
+          </Reveal>
+          <p className="mt-6 text-center text-xs text-white/30">
+            Illustrative examples
+          </p>
         </section>
 
         {/* Trust */}
-        <section aria-labelledby="trust-heading" className="mt-14">
+        <section
+          aria-labelledby="trust-heading"
+          className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-20"
+        >
           <div id="trust-heading">
             <SectionHeading
               kicker="Why trust it"
@@ -353,67 +533,78 @@ export default async function LandingPage() {
               body="GetOnShows is where independent podcasters, experts, and creators find each other. Real profiles, real people — no scraped directories, no fake listings, no noise."
             />
           </div>
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {[
-              "No credit card",
-              "No public email address",
-              "No mass messaging",
-              "Every pitch tied to a genuine match",
-              "No audience-size leaderboard",
-            ].map((t) => (
-              <li
-                key={t}
-                className="inline-flex items-center gap-2 rounded-full bg-navy-800 px-4 py-2 text-sm font-medium text-navy-100 ring-1 ring-white/15"
-              >
-                <span aria-hidden="true" className="font-bold text-brand">
-                  ✓
-                </span>
-                {t}
-              </li>
-            ))}
-          </ul>
+          <Reveal delay={150}>
+            <ul className="mx-auto mt-8 flex max-w-3xl flex-wrap justify-center gap-2">
+              {[
+                "No credit card",
+                "No public email address",
+                "No mass messaging",
+                "Every pitch tied to a genuine match",
+                "No audience-size leaderboard",
+              ].map((t) => (
+                <li
+                  key={t}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/80"
+                >
+                  <Check className="h-4 w-4 text-brand" />
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </Reveal>
         </section>
 
         {/* FAQ */}
-        <section aria-labelledby="faq-heading" className="mt-14">
+        <section
+          aria-labelledby="faq-heading"
+          className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-20"
+        >
           <div id="faq-heading">
             <SectionHeading kicker="Questions" title="FAQ" />
           </div>
-          <dl className="mt-4 space-y-3">
-            {FAQS.map((f) => (
-              <div
-                key={f.q}
-                className="rounded-2xl bg-navy-800 p-5 ring-1 ring-white/10"
-              >
-                <dt className="font-semibold">{f.q}</dt>
-                <dd className="mt-1 text-sm text-navy-100">{f.a}</dd>
-              </div>
+          <dl className="mx-auto mt-8 max-w-2xl space-y-3">
+            {FAQS.map((f, i) => (
+              <Reveal key={f.q} delay={i * 80}>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <dt className="font-bold">{f.q}</dt>
+                  <dd className="mt-1.5 text-white/60">{f.a}</dd>
+                </div>
+              </Reveal>
             ))}
           </dl>
         </section>
 
         {/* Final CTA */}
-        <section
-          aria-labelledby="cta-heading"
-          className="mt-14 rounded-2xl bg-navy-800 p-8 text-center ring-1 ring-white/10"
-        >
-          <h2 id="cta-heading" className="text-2xl font-bold">
-            Find your next great conversation
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-navy-100">
-            Create your profile, see who fits, and start conversations worth
-            having.
-          </p>
-          <Link
-            href="/login"
-            className="tap-target mt-6 inline-flex w-full items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white transition hover:bg-brand-dark sm:w-auto"
-          >
-            Get started — it&apos;s free
-          </Link>
+        <section className="mx-auto w-full max-w-6xl px-6 pb-20 pt-4">
+          <Reveal>
+            <div className="relative overflow-hidden rounded-3xl border border-brand/25 bg-gradient-to-br from-navy-800 via-navy-900 to-navy-950 p-10 text-center shadow-[0_0_110px_-24px_rgba(255,90,54,0.5)] sm:p-16">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0"
+              >
+                <div className="absolute -bottom-24 left-1/2 h-56 w-[36rem] -translate-x-1/2 rounded-full bg-brand/20 blur-3xl" />
+              </div>
+              <div className="relative">
+                <h2 className="text-3xl font-extrabold sm:text-4xl">
+                  Find your next great conversation
+                </h2>
+                <p className="mx-auto mt-3 max-w-md text-lg text-white/60">
+                  Create your profile, see who fits, and start conversations
+                  worth having.
+                </p>
+                <Link
+                  href="/login"
+                  className="tap-target mt-8 inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-brand px-10 py-4 text-lg font-bold text-white transition hover:bg-brand-dark"
+                >
+                  Get started — it&apos;s free
+                </Link>
+              </div>
+            </div>
+          </Reveal>
         </section>
       </main>
 
-      <footer className="mx-auto w-full max-w-2xl px-6 pb-10 text-center text-sm text-navy-300">
+      <footer className="mx-auto w-full max-w-6xl px-6 pb-10 text-center text-sm text-white/35">
         <p>Built first for independent podcasters, experts, and creators.</p>
       </footer>
     </div>
