@@ -117,6 +117,7 @@ function initialDraft(data: BuilderData): DraftInput {
       cadence: h?.cadence ?? "",
       episodeLengthMinutes: h?.episode_length_minutes?.toString() ?? "",
       guestCriteria: h?.guest_criteria ?? "",
+      guestBrief: h?.guest_brief ?? "",
       bookingUrl: h?.booking_url ?? "",
       recentEpisodeUrl: h?.recent_episode_url ?? "",
     },
@@ -351,6 +352,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
               cadence: draft.host.cadence,
               episode_length_minutes: null,
               guest_criteria: draft.host.guestCriteria,
+              guest_brief: draft.host.guestBrief,
               booking_url: draft.host.bookingUrl,
               recent_episode_url: draft.host.recentEpisodeUrl,
             }
@@ -643,6 +645,19 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
                 value={draft.host.guestCriteria}
                 onChange={(e) => setHost({ guestCriteria: e.target.value })}
                 placeholder="e.g. Operators with 5+ years in the trenches; no pitches for products."
+                maxLength={2000}
+                count
+              />
+            </Field>
+            <Field
+              label="Conversations you want to have"
+              required
+              hint="Describe the episodes you want to make — GetOnShows matches you with guests who fit."
+            >
+              <TextArea
+                value={draft.host.guestBrief}
+                onChange={(e) => setHost({ guestBrief: e.target.value })}
+                placeholder="e.g. I'm looking for people near Toronto with unusual expertise, meaningful personal stories, new research or strong ideas around AI, science, business and society. Prefer in-person conversations."
                 maxLength={2000}
                 count
               />

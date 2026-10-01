@@ -105,6 +105,8 @@ def build_matching_document(row: dict) -> str:
         parts.append(f"Show: {host['show_name']}")
     if host.get("guest_criteria"):
         parts.append(f"Looking for guests who: {host['guest_criteria']}")
+    if host.get("guest_brief"):
+        parts.append(f"Conversations this host wants: {host['guest_brief']}")
     guest = as_object(row.get("guest_profiles"))
     if guest.get("expertise"):
         parts.append(f"Expertise: {guest['expertise']}")
@@ -183,7 +185,7 @@ def summarize_availability(raw) -> str | None:
 def fetch_pending(limit: int) -> list:
     select = (
         "id,display_name,title,bio,availability_notes,availability,"
-        "host_profiles(show_name,guest_criteria),"
+        "host_profiles(show_name,guest_criteria,guest_brief),"
         "guest_profiles(expertise,talking_points),"
         "profile_topics(topics(label))"
     )

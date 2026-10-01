@@ -41,6 +41,7 @@ export interface HostModuleRow {
   cadence: string | null;
   episode_length_minutes: number | null;
   guest_criteria: string | null;
+  guest_brief: string | null;
   booking_url: string | null;
   recent_episode_url: string | null;
 }
@@ -69,6 +70,7 @@ export interface HostModuleInput {
   cadence: string;
   episodeLengthMinutes: string;
   guestCriteria: string;
+  guestBrief: string;
   bookingUrl: string;
   recentEpisodeUrl: string;
 }

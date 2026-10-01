@@ -354,6 +354,7 @@ export async function saveDraft(
           cadence: h.cadence.trim().slice(0, 60) || null,
           episode_length_minutes: h.episodeLengthMinutes.trim() === "" ? null : Number(h.episodeLengthMinutes) || null,
           guest_criteria: h.guestCriteria.trim().slice(0, 2000) || null,
+          guest_brief: h.guestBrief.trim().slice(0, 2000) || null,
           booking_url: h.bookingUrl.trim().slice(0, 500) || null,
           recent_episode_url: h.recentEpisodeUrl.trim().slice(0, 500) || null,
         },

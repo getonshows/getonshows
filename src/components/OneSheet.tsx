@@ -142,6 +142,16 @@ export default function OneSheet({
                 </dd>
               </div>
             )}
+            {hostModule.guest_brief && (
+              <div>
+                <dt className="text-sm text-slate-500">
+                  Conversations I want to have
+                </dt>
+                <dd className="whitespace-pre-line text-navy-900">
+                  {hostModule.guest_brief}
+                </dd>
+              </div>
+            )}
             {hostModule.guest_criteria && (
               <div>
                 <dt className="text-sm text-slate-500">Looking for guests who…</dt>

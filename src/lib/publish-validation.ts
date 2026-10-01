@@ -42,6 +42,8 @@ export function validatePublish(
     }
     if (!host?.format) missing.push("Interview format (remote, in-person, or both)");
     if (!host?.guest_criteria?.trim()) missing.push("Guest criteria");
+    if (!host?.guest_brief?.trim())
+      missing.push("Conversations you want to have");
     if (host?.booking_url?.trim() && !isUrl(host.booking_url)) {
       missing.push("Host booking link (must be a valid URL)");
     }
