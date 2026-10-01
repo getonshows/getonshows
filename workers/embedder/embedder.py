@@ -112,12 +112,77 @@ def build_matching_document(row: dict) -> str:
         parts.append("Talking points: " + "; ".join(guest["talking_points"]))
     if row.get("availability_notes"):
         parts.append(f"Availability: {row['availability_notes']}")
+    avail_summary = summarize_availability(row.get("availability"))
+    if avail_summary:
+        parts.append(f"Generally free: {avail_summary}")
     return "\n".join(parts)
+
+
+DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+DAY_SHORT = {"mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu",
+             "fri": "Fri", "sat": "Sat", "sun": "Sun"}
+VALID_SLOT = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
+
+
+def summarize_availability(raw) -> str | None:
+    """Mirror of the web summarizeAvailability(): 'Mon–Fri · 9 AM–5 PM'."""
+    if not isinstance(raw, dict):
+        return None
+    day_ranges = []
+    for day in DAY_ORDER:
+        slots = raw.get(day)
+        if not isinstance(slots, list):
+            continue
+        hours = sorted({int(s[:2]) for s in slots
+                        if isinstance(s, str) and VALID_SLOT.match(s)
+                        and 8 <= int(s[:2]) <= 19})
+        if not hours:
+            continue
+        ranges = []
+        start = prev = hours[0]
+        for h in hours[1:]:
+            if h == prev + 1:
+                prev = h
+            else:
+                ranges.append((start, prev + 1))
+                start = prev = h
+        ranges.append((start, prev + 1))
+
+        def fmt(h):
+            ap = "AM" if h < 12 else "PM"
+            hr = h % 12 or 12
+            return hr, ap
+
+        parts = []
+        for s, e in ranges:
+            s_hr, s_ap = fmt(s)
+            e_hr, e_ap = fmt(e)
+            if s_ap == e_ap:
+                parts.append(f"{s_hr}–{e_hr} {s_ap}")
+            else:
+                parts.append(f"{s_hr} {s_ap}–{e_hr} {e_ap}")
+        day_ranges.append((day, ", ".join(parts)))
+    if not day_ranges:
+        return None
+    groups = []
+    g_start = 0
+    for i in range(1, len(day_ranges) + 1):
+        same = (
+            i < len(day_ranges)
+            and day_ranges[i][1] == day_ranges[g_start][1]
+            and DAY_ORDER.index(day_ranges[i][0]) == DAY_ORDER.index(day_ranges[i - 1][0]) + 1
+        )
+        if not same:
+            label = (DAY_SHORT[day_ranges[g_start][0]] if g_start == i - 1
+                     else f"{DAY_SHORT[day_ranges[g_start][0]]}–{DAY_SHORT[day_ranges[i - 1][0]]}")
+            groups.append(f"{label} · {day_ranges[g_start][1]}")
+            g_start = i
+    return "; ".join(groups)
 
 
 def fetch_pending(limit: int) -> list:
     select = (
-        "id,display_name,title,bio,availability_notes,"
+        "id,display_name,title,bio,availability_notes,availability,"
         "host_profiles(show_name,guest_criteria),"
         "guest_profiles(expertise,talking_points),"
         "profile_topics(topics(label))"

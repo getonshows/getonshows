@@ -229,6 +229,30 @@ function toLinkArray(
     .filter((l) => l.label !== "" || l.url !== "");
 }
 
+const AVAIL_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+const AVAIL_SLOT = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** Keep only known day keys and HH:MM slots; cap at the full grid size. */
+function sanitizeAvailability(
+  input: unknown
+): Record<string, string[]> {
+  if (typeof input !== "object" || input === null) return {};
+  const out: Record<string, string[]> = {};
+  for (const day of AVAIL_DAYS) {
+    const slots = (input as Record<string, unknown>)[day];
+    if (!Array.isArray(slots)) continue;
+    const clean = Array.from(
+      new Set(
+        slots
+          .filter((s): s is string => typeof s === "string" && AVAIL_SLOT.test(s))
+          .map((s) => s.slice(0, 5))
+      )
+    ).sort();
+    if (clean.length > 0) out[day] = clean.slice(0, 12);
+  }
+  return out;
+}
+
 function computeCompleteness(
   input: DraftInput,
   role: Role
@@ -303,6 +327,7 @@ export async function saveDraft(
         links: toLinkArray(input.links),
         timezone: input.timezone.trim().slice(0, 80) || null,
         availability_notes: input.availabilityNotes.trim().slice(0, 1000) || null,
+        availability: sanitizeAvailability(input.availability),
         completeness,
       })
       .eq("id", profile.id);

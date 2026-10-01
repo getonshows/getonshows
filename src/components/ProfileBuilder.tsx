@@ -7,6 +7,10 @@ import { saveDraft, publishProfile } from "@/lib/actions";
 import { validatePublish } from "@/lib/publish-validation";
 import TopicPicker from "@/components/TopicPicker";
 import PhotoUpload from "@/components/PhotoUpload";
+import AvailabilityGrid, {
+  summarizeAvailability,
+  type AvailabilityValue,
+} from "@/components/AvailabilityGrid";
 import type {
   BuilderData,
   DraftInput,
@@ -27,25 +31,48 @@ const STEP_TITLES: Record<Step, string> = {
   review: "Review & publish",
 };
 
-const TIMEZONES = [
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Anchorage",
-  "Pacific/Honolulu",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Africa/Cairo",
-  "Asia/Dubai",
-  "Asia/Kolkata",
-  "Asia/Singapore",
-  "Asia/Tokyo",
-  "Australia/Sydney",
-  "Pacific/Auckland",
+const TIMEZONES: { value: string; label: string }[] = [
+  { value: "UTC", label: "UTC" },
+  { value: "America/Toronto", label: "Eastern — Toronto / New York" },
+  { value: "America/Chicago", label: "Central — Chicago" },
+  { value: "America/Denver", label: "Mountain — Denver" },
+  { value: "America/Los_Angeles", label: "Pacific — Los Angeles" },
+  { value: "America/Vancouver", label: "Pacific — Vancouver" },
+  { value: "America/Anchorage", label: "Alaska — Anchorage" },
+  { value: "Pacific/Honolulu", label: "Hawaii — Honolulu" },
+  { value: "Europe/London", label: "London" },
+  { value: "Europe/Paris", label: "Paris" },
+  { value: "Europe/Berlin", label: "Berlin" },
+  { value: "Africa/Cairo", label: "Cairo" },
+  { value: "Asia/Dubai", label: "Dubai" },
+  { value: "Asia/Kolkata", label: "Kolkata" },
+  { value: "Asia/Singapore", label: "Singapore" },
+  { value: "Asia/Tokyo", label: "Tokyo" },
+  { value: "Australia/Sydney", label: "Sydney" },
+  { value: "Pacific/Auckland", label: "Auckland" },
 ];
+
+const AVAIL_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+const AVAIL_SLOT_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** Parse the stored JSONB availability back into the grid shape. */
+function parseAvailability(raw: unknown): AvailabilityValue {
+  if (typeof raw !== "object" || raw === null) return {};
+  const out: AvailabilityValue = {};
+  for (const day of AVAIL_DAYS) {
+    const slots = (raw as Record<string, unknown>)[day];
+    if (!Array.isArray(slots)) continue;
+    const clean = Array.from(
+      new Set(
+        slots
+          .filter((s): s is string => typeof s === "string" && AVAIL_SLOT_RE.test(s))
+          .map((s) => s.slice(0, 5))
+      )
+    ).sort();
+    if (clean.length > 0) out[day] = clean.slice(0, 12);
+  }
+  return out;
+}
 
 const EMPTY_LINK = { label: "", url: "" };
 
@@ -81,6 +108,7 @@ function initialDraft(data: BuilderData): DraftInput {
     links: padLinks(links, 3),
     timezone: p?.timezone ?? "",
     availabilityNotes: p?.availability_notes ?? "",
+    availability: parseAvailability(p?.availability),
     host: {
       showName: h?.show_name ?? "",
       showUrl: h?.show_url ?? "",
@@ -437,19 +465,25 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
               />
             </Field>
             <Field label="Time zone" hint="So booking conversations start in the right place.">
-              <TextInput
-                type="text"
-                list="timezones"
-                value={draft.timezone}
-                onChange={(e) => set("timezone", e.target.value)}
-                placeholder="e.g. America/New_York"
-                maxLength={80}
-              />
-              <datalist id="timezones">
+              <select
+                value={TIMEZONES.some((t) => t.value === draft.timezone) || draft.timezone === "" ? draft.timezone : "__custom"}
+                onChange={(e) =>
+                  set("timezone", e.target.value === "__custom" ? draft.timezone : e.target.value)
+                }
+                className="tap-target mt-1 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-900"
+                aria-label="Time zone"
+              >
+                <option value="">Choose a time zone…</option>
                 {TIMEZONES.map((tz) => (
-                  <option key={tz} value={tz} />
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </option>
                 ))}
-              </datalist>
+                {draft.timezone !== "" &&
+                  !TIMEZONES.some((t) => t.value === draft.timezone) && (
+                    <option value="__custom">{draft.timezone}</option>
+                  )}
+              </select>
             </Field>
             <div>
               <h2 className="text-sm font-semibold text-navy-900">Links</h2>
@@ -464,6 +498,15 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
                 />
               </div>
             </div>
+            <Field
+              label="Weekly availability"
+              hint="Mark the hours you're generally free for recordings, 8 AM–8 PM. Optional — the notes below add context."
+            >
+              <AvailabilityGrid
+                value={draft.availability}
+                onChange={(v) => set("availability", v)}
+              />
+            </Field>
             <Field label="Availability notes" hint="Anything about your schedule worth knowing up front.">
               <TextArea
                 value={draft.availabilityNotes}
@@ -731,6 +774,26 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
                   style={{ width: `${completeness}%` }}
                 />
               </div>
+
+            {(() => {
+              const summary = summarizeAvailability(draft.availability);
+              return (
+                <dl className="mt-4 space-y-1 text-sm">
+                  <div className="flex gap-2">
+                    <dt className="font-medium text-slate-500">Time zone</dt>
+                    <dd className="text-navy-900">
+                      {draft.timezone
+                        ? (TIMEZONES.find((t) => t.value === draft.timezone)?.label ?? draft.timezone)
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt className="font-medium text-slate-500">Availability</dt>
+                    <dd className="text-navy-900">{summary ?? "—"}</dd>
+                  </div>
+                </dl>
+              );
+            })()}
             </div>
 
             {missing.length > 0 ? (

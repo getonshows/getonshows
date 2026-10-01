@@ -4,6 +4,7 @@ import type {
   ProfileRow,
   TopicRow,
 } from "@/lib/types";
+import { summarizeAvailability } from "@/components/AvailabilityGrid";
 
 function Section({
   title,
@@ -202,7 +203,8 @@ export default function OneSheet({
 
       {(profile.links.length > 0 ||
         profile.timezone ||
-        profile.availability_notes) && (
+        profile.availability_notes ||
+        summarizeAvailability(profile.availability)) && (
         <Section title="Links & availability">
           <LinkList links={profile.links} />
           {profile.timezone && (
@@ -210,6 +212,14 @@ export default function OneSheet({
               Time zone: {profile.timezone}
             </p>
           )}
+          {(() => {
+            const summary = summarizeAvailability(profile.availability);
+            return summary ? (
+              <p className="mt-1 text-sm text-slate-600">
+                Generally free: {summary}
+              </p>
+            ) : null;
+          })()}
           {profile.availability_notes && (
             <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
               {profile.availability_notes}

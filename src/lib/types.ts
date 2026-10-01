@@ -20,6 +20,7 @@ export interface ProfileRow {
   links: { label: string; url: string }[];
   timezone: string | null;
   availability_notes: string | null;
+  availability: Record<string, string[]> | null;
   state: ProfileState;
   completeness: number;
   updated_at: string | null;
@@ -88,6 +89,8 @@ export interface DraftInput {
   links: { label: string; url: string }[];
   timezone: string;
   availabilityNotes: string;
+  /** Weekly grid: { "mon": ["09:00", ...], ... }. Slots hourly, 08:00–19:00. */
+  availability: Record<string, string[]>;
   host: HostModuleInput | null;
   guest: GuestModuleInput | null;
   topicIds: string[];
