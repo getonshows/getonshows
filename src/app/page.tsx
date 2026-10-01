@@ -42,7 +42,7 @@ const VALUE_PROPS = [
   },
   {
     title: "Send thoughtful pitches",
-    body: "Structured first messages, rate-limited. No mass messaging, no inbox spam.",
+    body: "Thoughtful first messages. No mass messaging, no inbox spam.",
   },
   {
     title: "Book however you already work",
@@ -88,7 +88,7 @@ const FAQS = [
   },
   {
     q: "Will I get spammed with pitches?",
-    a: "No. There is no mass messaging — pitches are structured and rate-limited, and you only hear from people whose profile fits what you're looking for.",
+    a: "No. There is no mass messaging — you only hear from people whose profile genuinely fits what you're looking for.",
   },
   {
     q: "Is this another pay-to-pitch platform?",
@@ -119,9 +119,9 @@ export default async function LandingPage() {
           GetOnShows
         </p>
         <h1 className="mt-6 text-4xl font-bold leading-tight sm:text-5xl">
-          Get on the right podcasts.
+          Find podcasts worth appearing on.
           <br />
-          Or find the right guest for yours.
+          Find guests worth interviewing.
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-navy-100">
           GetOnShows helps podcast hosts and interesting people discover each
@@ -133,13 +133,13 @@ export default async function LandingPage() {
             href="/login?intent=guest"
             className="tap-target inline-flex items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white transition hover:bg-brand-dark"
           >
-            Find podcasts for me
+            Find podcasts
           </Link>
           <Link
             href="/login?intent=host"
             className="tap-target inline-flex items-center justify-center rounded-xl bg-white/10 px-6 font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20"
           >
-            Find guests for my show
+            Find guests
           </Link>
         </div>
         <p className="mt-4 text-sm text-navy-200">
@@ -190,6 +190,15 @@ export default async function LandingPage() {
                 parts of your job?”
               </p>
             </div>
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
+                Proof of expertise
+              </h3>
+              <p className="mt-1 text-navy-100">
+                Published articles on AI adoption • Conference speaker •
+                Cited in industry research
+              </p>
+            </div>
             <Link
               href="/login"
               className="tap-target mt-5 inline-flex w-full items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white transition hover:bg-brand-dark"
@@ -199,12 +208,88 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* Host promise */}
+        <section aria-labelledby="host-promise-heading" className="mt-14">
+          <div id="host-promise-heading">
+            <SectionHeading
+              kicker="For hosts"
+              title="Stop searching for guests."
+              body="Tell us the conversations you want to have — the topics, the expertise, the stories. GetOnShows does the searching, and shows you exactly why each person fits."
+            />
+          </div>
+          <div className="mt-4 rounded-2xl bg-navy-800 p-6 ring-1 ring-white/10">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold uppercase tracking-[0.15em] text-brand">
+                Your brief
+              </p>
+              <p className="text-xs text-navy-300">Illustrative example</p>
+            </div>
+            <p className="mt-2 italic text-navy-100">
+              “I&apos;m looking for people near Toronto with unusual
+              expertise, meaningful personal stories, new research, or strong
+              ideas around AI, science, business, and society. Prefer
+              in-person conversations.”
+            </p>
+            <div className="mt-5 border-t border-white/10 pt-5">
+              <p className="text-lg font-semibold">
+                Myles Harrison{" "}
+                <span className="ml-1 rounded-full bg-brand/20 px-3 py-0.5 text-sm font-bold text-brand">
+                  Strong match
+                </span>
+              </p>
+              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
+                Why he fits
+              </h3>
+              <p className="mt-1 text-navy-100">
+                AI practitioner, Toronto-area, comfortable discussing LLMs
+                and agents, founder perspective, suited to long-form
+                conversation.
+              </p>
+              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
+                Potential episode
+              </h3>
+              <p className="mt-1 font-semibold text-white">
+                “What AI Can Actually Do in 2026, Without the Hype”
+              </p>
+              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
+                Why your audience might care
+              </h3>
+              <p className="mt-1 text-navy-100">
+                Agents, disappearing knowledge work, what businesses
+                misunderstand about LLMs.
+              </p>
+              <h3 className="mt-4 text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
+                Evidence
+              </h3>
+              <p className="mt-1 text-navy-100">3 relevant links.</p>
+              <div className="mt-4 rounded-xl bg-navy-900/60 p-4 ring-1 ring-white/10">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-navy-300">
+                  Suggested opening message
+                </h3>
+                <p className="mt-1 italic text-navy-100">
+                  “Hi Myles — I&apos;m recording an episode on what AI can
+                  actually do in 2026, without the hype. Your work on LLM
+                  agents plus the founder perspective would be perfect.
+                  Open to a 45-minute conversation next week?”
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/login?intent=host"
+              className="tap-target mt-5 inline-flex w-full items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white transition hover:bg-brand-dark"
+            >
+              Find guests
+            </Link>
+          </div>
+        </section>
+
         {/* Value props */}
         <section aria-labelledby="better-heading" className="mt-14">
           <div id="better-heading">
             <SectionHeading
-              kicker="Why GetOnShows"
+              kicker="How it's different"
               title="Better than cold outreach"
+              body="Google, LinkedIn, and Facebook groups hand you endless lists — and hours of guessing who might say yes. GetOnShows doesn't give you a directory. We identify people who are actually a strong fit, and explain exactly why."
             />
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -273,6 +358,7 @@ export default async function LandingPage() {
               "No credit card",
               "No public email address",
               "No mass messaging",
+              "Every pitch tied to a genuine match",
               "No audience-size leaderboard",
             ].map((t) => (
               <li
