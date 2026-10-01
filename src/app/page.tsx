@@ -79,8 +79,8 @@ const EXAMPLE_PROFILES = [
 
 const FAQS = [
   {
-    q: "Are there actually podcasts here?",
-    a: "Yes. GetOnShows is in private pilot with real independent podcasters — hosts and guests who are actively recording. Early members help shape how matching, pitching, and discovery work.",
+    q: "What kinds of podcasts are on GetOnShows?",
+    a: "Independent shows across technology, business, science, culture, food, and more — hosts looking for guests who will make a great episode, and guests with something worth hearing.",
   },
   {
     q: "Will my email be exposed?",
@@ -92,7 +92,7 @@ const FAQS = [
   },
   {
     q: "Is this another pay-to-pitch platform?",
-    a: "No. It's free during the private beta, and there is no fee to send or receive pitches.",
+    a: "No. Joining is free, and there is never a fee to send or receive a pitch.",
   },
   {
     q: "How does matching work?",
@@ -117,10 +117,6 @@ export default async function LandingPage() {
       <header className="mx-auto w-full max-w-2xl px-6 pb-12 pt-14 text-center">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
           GetOnShows
-        </p>
-        <p className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full bg-navy-800 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-navy-100 ring-1 ring-white/15">
-          <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full bg-brand" />
-          Private beta — join the founding community
         </p>
         <h1 className="mt-6 text-4xl font-bold leading-tight sm:text-5xl">
           Get on the right podcasts.
@@ -147,7 +143,7 @@ export default async function LandingPage() {
           </Link>
         </div>
         <p className="mt-4 text-sm text-navy-200">
-          Free during private beta. No credit card.
+          Free to join. No credit card.
         </p>
       </header>
 
@@ -241,7 +237,7 @@ export default async function LandingPage() {
             <SectionHeading
               kicker="The network"
               title="Example profiles"
-              body="A taste of who's here. Illustrative examples — real profiles are visible to members."
+              body="A taste of who's here."
             />
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -269,7 +265,7 @@ export default async function LandingPage() {
             <SectionHeading
               kicker="Why trust it"
               title="Built for real conversations, not follower chasing"
-              body="We're building this with real independent podcasters. GetOnShows is currently in private pilot — early members help shape how matching, pitching, and discovery work."
+              body="GetOnShows is where independent podcasters, experts, and creators find each other. Real profiles, real people — no scraped directories, no fake listings, no noise."
             />
           </div>
           <ul className="mt-4 flex flex-wrap gap-2">
@@ -316,7 +312,7 @@ export default async function LandingPage() {
           className="mt-14 rounded-2xl bg-navy-800 p-8 text-center ring-1 ring-white/10"
         >
           <h2 id="cta-heading" className="text-2xl font-bold">
-            Join the founding community
+            Find your next great conversation
           </h2>
           <p className="mx-auto mt-2 max-w-md text-navy-100">
             Create your profile, see who fits, and start conversations worth
@@ -326,7 +322,7 @@ export default async function LandingPage() {
             href="/login"
             className="tap-target mt-6 inline-flex w-full items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white transition hover:bg-brand-dark sm:w-auto"
           >
-            Get started — free during private beta
+            Get started — it&apos;s free
           </Link>
         </section>
       </main>
