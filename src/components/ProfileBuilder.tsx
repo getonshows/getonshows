@@ -541,7 +541,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
                 maxLength={160}
               />
             </Field>
-            <Field label="Show URL" required hint="Where a guest would listen or learn more.">
+            <Field label="Show URL" hint="Where a guest would listen or learn more. Optional.">
               <TextInput
                 type="url"
                 inputMode="url"
@@ -733,8 +733,7 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
             </fieldset>
             <div>
               <h2 className="text-sm font-semibold text-navy-900">
-                Proof links <span aria-hidden="true" className="text-brand-dark">*</span>
-                <span className="sr-only"> (at least one required)</span>
+                Proof links
               </h2>
               <p className="mt-0.5 text-sm text-slate-600">
                 Evidence you deliver: talks, articles, past appearances.

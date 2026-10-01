@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -161,9 +162,14 @@ export default function LoginForm({ intent }: { intent: string | null }) {
   return (
     <div className="flex min-h-dvh flex-col bg-paper">
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
-          GetOnShows
-        </p>
+        <Image
+          src="/logo.png"
+          alt="GetOnShows"
+          width={220}
+          height={140}
+          priority
+          className="mb-6 rounded-2xl bg-white px-6 py-3 shadow-md shadow-brand/10"
+        />
         <h1 className="mt-3 text-3xl font-bold text-navy-900">
           Join GetOnShows
         </h1>

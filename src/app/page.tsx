@@ -202,9 +202,16 @@ export default async function LandingPage() {
           <div className="absolute -right-24 top-72 h-64 w-64 rounded-full bg-brand/10 blur-3xl" />
         </div>
         <div className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-16 text-center sm:pt-24">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand">
-            GetOnShows
-          </p>
+          <div className="flex justify-center">
+            <Image
+              src="/logo.png"
+              alt="GetOnShows"
+              width={300}
+              height={191}
+              priority
+              className="rounded-2xl bg-white px-8 py-4 shadow-lg shadow-brand/10"
+            />
+          </div>
           <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-tight sm:text-6xl">
             Find podcasts{" "}
             <span className="bg-gradient-to-r from-[#FFB59E] via-[#FF7A59] to-brand bg-clip-text text-transparent">

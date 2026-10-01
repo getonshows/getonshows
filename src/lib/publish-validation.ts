@@ -4,9 +4,15 @@ import type {
   Role,
 } from "@/lib/types";
 
+export function normalizeUrl(value: string): string {
+  const v = value.trim();
+  if (!v) return v;
+  return /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(v) ? v : `https://${v}`;
+}
+
 export function isUrl(value: string): boolean {
   try {
-    const u = new URL(value.trim());
+    const u = new URL(normalizeUrl(value));
     return u.protocol === "http:" || u.protocol === "https:";
   } catch {
     return false;
@@ -37,7 +43,7 @@ export function validatePublish(
   }
   if (role === "host" || role === "dual") {
     if (!host?.show_name?.trim()) missing.push("Show name");
-    if (!host?.show_url?.trim() || !isUrl(host.show_url)) {
+    if (host?.show_url?.trim() && !isUrl(host.show_url)) {
       missing.push("Show URL (must be a valid link)");
     }
     if (!host?.format) missing.push("Interview format (remote, in-person, or both)");
@@ -54,8 +60,8 @@ export function validatePublish(
       missing.push("At least one talking point");
     }
     const links = guest?.proof_links ?? [];
-    if (!links.some((l) => l.url && isUrl(l.url))) {
-      missing.push("At least one proof link (valid URL)");
+    if (links.some((l) => l.url?.trim() && !isUrl(l.url))) {
+      missing.push("Proof link (must be a valid URL)");
     }
     if (guest?.booking_url?.trim() && !isUrl(guest.booking_url)) {
       missing.push("Guest booking link (must be a valid URL)");
