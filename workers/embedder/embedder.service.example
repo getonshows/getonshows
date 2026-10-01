@@ -1,0 +1,19 @@
+# Example systemd unit for the GetOnShows embedding worker.
+# Copy to /etc/systemd/system/getonshows-embedder.service and edit
+# User, WorkingDirectory, and the venv path to match your server.
+
+[Unit]
+Description=GetOnShows embedding worker
+After=network.target
+
+[Service]
+Type=simple
+User=getonshows
+WorkingDirectory=/opt/getonshows/workers/embedder
+EnvironmentFile=/opt/getonshows/workers/embedder/.env
+ExecStart=/opt/getonshows/workers/embedder/venv/bin/python /opt/getonshows/workers/embedder/embedder.py --loop
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

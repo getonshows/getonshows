@@ -1,0 +1,6 @@
+# sentence-transformers pulls in torch (CPU build by default).
+# For NVIDIA GPU acceleration, install the CUDA torch build first:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+sentence-transformers>=3.0.0
+requests>=2.31.0
+python-dotenv>=1.0.0

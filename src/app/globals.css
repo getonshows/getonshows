@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-paper text-slate-900 antialiased;
+}
+
+/* Visible keyboard focus everywhere (accessibility baseline) */
+:focus-visible {
+  outline: 2px solid #0e9384;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 44px minimum tap targets for touch */
+.tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

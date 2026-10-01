@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+dist/
+
+# env
+.env
+.env*.local
+
+# supabase
+supabase/.branches/
+supabase/.temp/
+
+# misc
+*.log
+.DS_Store
+
+# python
+__pycache__/
+*.pyc
+workers/embedder/.env
