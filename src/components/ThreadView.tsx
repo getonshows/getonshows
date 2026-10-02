@@ -296,7 +296,11 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
                 onClick={() => handleIntent("booked")}
                 className="tap-target flex-1 rounded-xl bg-teal-600 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
               >
-                {acting ? "Booking…" : "Book this guest"}
+                {acting
+                  ? "Booking…"
+                  : other.isHost
+                    ? "Book this show"
+                    : "Book this guest"}
               </button>
               {confirmPass ? (
                 <>
@@ -328,14 +332,32 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
             </div>
           )}
           <p className="mt-1.5 text-center text-xs text-slate-500">
-            Passing archives this thread. Booking opens their booking link.
+            {canBook
+              ? "Booking claims the spot and opens their booking link to pick a time."
+              : "Mark Interested when you're ready — that's what unlocks booking. Passing archives this thread."}
           </p>
         </div>
       )}
       {state === "booked" && (
-        <p className="border-t border-slate-100 pt-3 text-center text-xs font-medium text-teal-700">
-          🎙️ This booking is claimed. Check their booking link for next steps.
-        </p>
+        <div className="border-t border-slate-100 pt-3 text-center">
+          <p className="text-xs font-medium text-teal-700">
+            🎙️ This booking is claimed.
+          </p>
+          {other.bookingUrl ? (
+            <a
+              href={other.bookingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tap-target mt-2 inline-block rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700"
+            >
+              Open their booking link
+            </a>
+          ) : (
+            <p className="mt-1 text-xs text-slate-500">
+              They haven't added a booking link — arrange the time in chat.
+            </p>
+          )}
+        </div>
       )}
       {archived && state === "passed" && (
         <p className="border-t border-slate-100 pt-3 text-center text-xs text-slate-500">
