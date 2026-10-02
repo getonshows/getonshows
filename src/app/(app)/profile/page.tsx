@@ -23,9 +23,13 @@ import UpcomingBookings from "@/components/UpcomingBookings";
 function StateCard({
   state,
   completeness,
+  needsHostModule,
+  needsGuestModule,
 }: {
   state: string;
   completeness: number;
+  needsHostModule: boolean;
+  needsGuestModule: boolean;
 }) {
   if (state === "draft") {
     return (
@@ -69,8 +73,24 @@ function StateCard({
           Your profile is live
         </h2>
         <p className="mt-1 text-slate-600">
-          It appears in discovery. Pause it any time to hide it without losing
-          your work.
+          {needsHostModule || needsGuestModule ? (
+            <>
+              Your complete sections appear in discovery. Your{" "}
+              {needsHostModule && needsGuestModule
+                ? "host and guest sections"
+                : needsHostModule
+                  ? "host section"
+                  : "guest section"}{" "}
+              {needsHostModule && needsGuestModule ? "are" : "is"} still
+              incomplete and hidden from your public profile until you finish
+              them.
+            </>
+          ) : (
+            <>
+              It appears in discovery. Pause it any time to hide it without
+              losing your work.
+            </>
+          )}
         </p>
         <div className="mt-4">
           <form action={pauseProfile}>
@@ -120,19 +140,20 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 export default async function ProfileHomePage() {
-  const { userRow, profile, hasHostModule, hasGuestModule, topicCount } =
+  const { userRow, profile, hasHostModule, hasGuestModule, hostComplete, guestComplete, topicCount } =
     await loadProfileHome();
   const stats = await loadProfileStats();
   const collaborations = await loadCollaborations();
   const inviteInfo = await getInviteInfo();
   const upcomingBookings = await getUpcomingBookings();
 
-  // Task 0 edge: after switching to a role whose module was never started,
-  // guide to the builder (link, never an auto-redirect).
+  // Task 0 edge: after switching to a role whose module is missing or
+  // incomplete, guide to the builder (link, never an auto-redirect). A module
+  // row exists as soon as a draft is saved, so "started" alone is not enough.
   const needsHostModule =
-    (userRow.role === "host" || userRow.role === "dual") && !hasHostModule;
+    (userRow.role === "host" || userRow.role === "dual") && !hostComplete;
   const needsGuestModule =
-    (userRow.role === "guest" || userRow.role === "dual") && !hasGuestModule;
+    (userRow.role === "guest" || userRow.role === "dual") && !guestComplete;
 
   const adminEmails = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
@@ -230,13 +251,14 @@ export default async function ProfileHomePage() {
                 : "Finish your guest side"}
           </h2>
           <p className="mt-1 text-sm text-slate-700">
-            You switched roles. Your existing data is safe. Complete the{" "}
+            Your existing data is safe. Only complete sections appear on your
+            public profile, so finish the{" "}
             {needsHostModule && needsGuestModule
-              ? "host and guest modules"
+              ? "host and guest sections"
               : needsHostModule
-                ? "host module"
-                : "guest module"}{" "}
-            to publish in this role.
+                ? "host section"
+                : "guest section"}{" "}
+            to show up fully in this role.
           </p>
           <Link
             href="/profile/builder"
@@ -277,7 +299,12 @@ export default async function ProfileHomePage() {
       <InviteCard initial={inviteInfo} />
 
       {profile ? (
-        <StateCard state={profile.state} completeness={profile.completeness} />
+        <StateCard
+          state={profile.state}
+          completeness={profile.completeness}
+          needsHostModule={needsHostModule}
+          needsGuestModule={needsGuestModule}
+        />
       ) : (
         <section className="rounded-2xl bg-white p-5 ring-1 ring-slate-200">
           <h2 className="text-lg font-semibold text-navy-900">
@@ -305,7 +332,7 @@ export default async function ProfileHomePage() {
               <div className="flex justify-between">
                 <dt className="text-slate-600">Host module</dt>
                 <dd className="font-semibold text-navy-900">
-                  {hasHostModule ? "Started" : "Not started"}
+                  {hostComplete ? "Complete" : hasHostModule ? "In progress" : "Not started"}
                 </dd>
               </div>
             )}
@@ -313,7 +340,7 @@ export default async function ProfileHomePage() {
               <div className="flex justify-between">
                 <dt className="text-slate-600">Guest module</dt>
                 <dd className="font-semibold text-navy-900">
-                  {hasGuestModule ? "Started" : "Not started"}
+                  {guestComplete ? "Complete" : hasGuestModule ? "In progress" : "Not started"}
                 </dd>
               </div>
             )}

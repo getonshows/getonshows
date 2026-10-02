@@ -24,11 +24,15 @@ export default async function ProfileViewPage() {
   const p = (profile ?? null) as ProfileRow | null;
   if (!p || p.state !== "published") redirect("/profile/builder");
 
-  const [{ data: host }, { data: guest }, { data: pts }] = await Promise.all([
+  const [{ data: host }, { data: guest }, { data: pts }, { data: userRow }] = await Promise.all([
     supabase.from("host_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
     supabase.from("guest_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
     supabase.from("profile_topics").select("topic_id").eq("profile_id", p.id),
+    supabase.from("users").select("role").eq("id", user.id).maybeSingle(),
   ]);
+  const ownRole = (userRow as { role?: string } | null)?.role;
+  const canonicalRole =
+    ownRole === "host" || ownRole === "guest" || ownRole === "dual" ? ownRole : null;
 
   const topicIds = ((pts ?? []) as { topic_id: string }[]).map((r) => r.topic_id);
   let topics: TopicRow[] = [];
@@ -54,6 +58,7 @@ export default async function ProfileViewPage() {
         hostModule={(host ?? null) as HostModuleRow | null}
         guestModule={(guest ?? null) as GuestModuleRow | null}
         topics={topics}
+        role={canonicalRole}
       />
     </div>
   );

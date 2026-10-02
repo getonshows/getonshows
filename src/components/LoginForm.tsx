@@ -21,6 +21,7 @@ export default function LoginForm({ intent }: { intent: string | null }) {
   const [message, setMessage] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [resending, setResending] = useState(false);
+  const [errorKind, setErrorKind] = useState<"otp" | "google">("otp");
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -34,6 +35,35 @@ export default function LoginForm({ intent }: { intent: string | null }) {
   const [password, setPassword] = useState("");
   const [pwStatus, setPwStatus] = useState<PwStatus>("idle");
   const [pwMessage, setPwMessage] = useState("");
+  const [pwResendConfirm, setPwResendConfirm] = useState(false);
+  const [resetStatus, setResetStatus] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [resetMessage, setResetMessage] = useState("");
+
+  /** Carry the typed email across the magic-link / password boundary. */
+  function enterPasswordMode() {
+    setPwEmail((cur) => cur || email);
+    setResetStatus("idle");
+    setResetMessage("");
+    setShowPassword(true);
+  }
+  function leavePasswordMode() {
+    setEmail((cur) => cur || pwEmail);
+    setShowPassword(false);
+  }
+
+  function friendlyOtpError(
+    error: { message: string },
+    action: "send" | "resend"
+  ): string {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("rate limit") || msg.includes("too many"))
+      return "Too many links sent in a short time. Wait a minute, then try again.";
+    return action === "resend"
+      ? "We couldn't resend that link. Check the email address and try again."
+      : "We couldn't send that link. Check the email address and try again.";
+  }
 
   async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault();
@@ -49,9 +79,8 @@ export default function LoginForm({ intent }: { intent: string | null }) {
     });
     if (error) {
       setStatus("error");
-      setMessage(
-        "We couldn't send that link. Check the email address and try again."
-      );
+      setErrorKind("otp");
+      setMessage(friendlyOtpError(error, "send"));
     } else {
       setStatus("sent");
       setCooldown(60);
@@ -71,9 +100,8 @@ export default function LoginForm({ intent }: { intent: string | null }) {
     setResending(false);
     if (error) {
       setStatus("error");
-      setMessage(
-        "We couldn't resend that link. Check the email address and try again."
-      );
+      setErrorKind("otp");
+      setMessage(friendlyOtpError(error, "resend"));
     } else {
       setStatus("sent");
       setCooldown(60);
@@ -97,6 +125,29 @@ export default function LoginForm({ intent }: { intent: string | null }) {
     }
   }
 
+  async function sendPasswordReset() {
+    const target = pwEmail.trim();
+    if (!target) {
+      setResetStatus("error");
+      setResetMessage("Enter your email address above first.");
+      return;
+    }
+    const supabase = createClient();
+    setResetStatus("sending");
+    setResetMessage("");
+    const { error } = await supabase.auth.resetPasswordForEmail(target, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset`,
+    });
+    if (error) {
+      setResetStatus("error");
+      setResetMessage(
+        "We couldn't send that reset link. Check the email address and try again."
+      );
+    } else {
+      setResetStatus("sent");
+    }
+  }
+
   async function signInWithGoogle() {
     rememberIntent(intent);
     const supabase = createClient();
@@ -110,7 +161,10 @@ export default function LoginForm({ intent }: { intent: string | null }) {
     });
     if (error) {
       setStatus("error");
-      setMessage("Google sign-in failed to start. Please try again.");
+      setErrorKind("google");
+      setMessage(
+        "Google sign-in didn't start. Check your connection and try again."
+      );
     }
   }
 
@@ -156,17 +210,35 @@ export default function LoginForm({ intent }: { intent: string | null }) {
     window.location.href = dest;
   }
 
-  function friendlyAuthError(error: { message: string }): string {
+  function friendlyAuthError(error: { message: string }): {
+    text: string;
+    resendConfirm: boolean;
+  } {
     const msg = error.message.toLowerCase();
-    if (msg.includes("invalid login credentials"))
-      return "Incorrect email or password. Try again or create an account.";
-    if (msg.includes("user already registered") || msg.includes("already exists"))
-      return "An account with this email already exists. Sign in instead.";
-    if (msg.includes("password"))
-      return "Password must be at least 6 characters.";
     if (msg.includes("email not confirmed"))
-      return "Please confirm your email first. Check your inbox for the link.";
-    return "Something went wrong. Please try again.";
+      return {
+        text: "This email is not confirmed yet. Check your inbox for the confirmation link, including spam, or resend it below.",
+        resendConfirm: true,
+      };
+    if (msg.includes("invalid login credentials"))
+      return {
+        text: "Incorrect email or password. Try again, or use the Google button above for one-tap sign-in.",
+        resendConfirm: false,
+      };
+    if (msg.includes("user already registered") || msg.includes("already exists"))
+      return {
+        text: "An account with this email already exists. Switch to the Sign in tab and try again.",
+        resendConfirm: false,
+      };
+    if (msg.includes("password"))
+      return {
+        text: "Password must be at least 6 characters.",
+        resendConfirm: false,
+      };
+    return {
+      text: "We could not sign you in. Check your connection and try again, or use the Google button above.",
+      resendConfirm: false,
+    };
   }
 
   async function submitPassword(e: React.FormEvent) {
@@ -175,14 +247,17 @@ export default function LoginForm({ intent }: { intent: string | null }) {
     const supabase = createClient();
     setPwStatus("working");
     setPwMessage("");
+    setPwResendConfirm(false);
     if (pwMode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({
         email: pwEmail.trim(),
         password,
       });
       if (error) {
+        const friendly = friendlyAuthError(error);
         setPwStatus("error");
-        setPwMessage(friendlyAuthError(error));
+        setPwMessage(friendly.text);
+        setPwResendConfirm(friendly.resendConfirm);
         return;
       }
       await routeAfterPasswordAuth();
@@ -195,8 +270,10 @@ export default function LoginForm({ intent }: { intent: string | null }) {
         },
       });
       if (error) {
+        const friendly = friendlyAuthError(error);
         setPwStatus("error");
-        setPwMessage(friendlyAuthError(error));
+        setPwMessage(friendly.text);
+        setPwResendConfirm(friendly.resendConfirm);
         return;
       }
       if (data.session) {
@@ -219,13 +296,17 @@ export default function LoginForm({ intent }: { intent: string | null }) {
           className="mb-6"
         />
         <h1 className="mt-3 text-3xl font-bold text-navy-900">
-          Join GetOnShows
+          {intent === "host"
+            ? "Find guests for your podcast"
+            : intent === "guest"
+              ? "Find podcasts to appear on"
+              : "Join GetOnShows"}
         </h1>
         <p className="mt-2 text-slate-600">
           {intent === "host"
-            ? "Create your profile and find guests worth hearing."
+            ? "Create your profile and get matched by topic, style, and audience."
             : intent === "guest"
-              ? "Create your profile and get on the right podcasts."
+              ? "Create your profile and get discovered by the right hosts."
               : "Create your profile and find your next great conversation."}
         </p>
 
@@ -244,13 +325,15 @@ export default function LoginForm({ intent }: { intent: string | null }) {
           One tap, no waiting on an email.
         </p>
 
-        <div className="my-6 flex items-center gap-3 text-sm text-slate-500">
-          <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
-          or
-          <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
-        </div>
+        {!showPassword && (
+          <>
+            <div className="my-6 flex items-center gap-3 text-sm text-slate-500">
+              <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
+              or
+              <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
+            </div>
 
-        {status === "sent" ? (
+            {status === "sent" ? (
           <div
             role="status"
             className="rounded-2xl bg-brand-light p-5 ring-1 ring-brand/30"
@@ -308,9 +391,21 @@ export default function LoginForm({ intent }: { intent: string | null }) {
               </p>
             </div>
             {status === "error" && (
-              <p role="alert" className="text-sm font-medium text-red-700">
-                {message}
-              </p>
+              <div
+                role="alert"
+                className="rounded-xl bg-red-50 p-4 ring-1 ring-red-200"
+              >
+                <p className="text-sm font-medium text-red-800">{message}</p>
+                <button
+                  type="button"
+                  onClick={signInWithGoogle}
+                  className="tap-target mt-1 text-sm font-semibold text-brand-dark underline"
+                >
+                  {errorKind === "google"
+                    ? "Try Google again"
+                    : "Skip the wait, continue with Google instead"}
+                </button>
+              </div>
             )}
             <button
               type="submit"
@@ -321,18 +416,25 @@ export default function LoginForm({ intent }: { intent: string | null }) {
             </button>
           </form>
         )}
+          </>
+        )}
 
         <div className="mt-8 border-t border-slate-200 pt-6">
           {!showPassword ? (
             <button
               type="button"
-              onClick={() => setShowPassword(true)}
+              onClick={enterPasswordMode}
               className="tap-target w-full text-center text-sm font-semibold text-brand-dark underline"
             >
               Prefer a password? Sign in with a password instead
             </button>
           ) : (
             <section aria-label="Email and password">
+              <h2 className="mb-3 text-lg font-semibold text-navy-900">
+                {pwMode === "signin"
+                  ? "Sign in with your password"
+                  : "Create your account with a password"}
+              </h2>
               <div
                 role="tablist"
                 aria-label="Password mode"
@@ -444,11 +546,66 @@ export default function LoginForm({ intent }: { intent: string | null }) {
                       }
                       className="tap-target mt-1 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-900 placeholder:text-slate-400"
                     />
+                    {pwMode === "signin" && (
+                      <div className="mt-2 text-right">
+                        <button
+                          type="button"
+                          onClick={sendPasswordReset}
+                          disabled={resetStatus === "sending"}
+                          className="tap-target text-sm font-semibold text-brand-dark underline disabled:text-slate-400 disabled:no-underline"
+                        >
+                          {resetStatus === "sending"
+                            ? "Sending…"
+                            : "Forgot password?"}
+                        </button>
+                      </div>
+                    )}
+                    {resetStatus === "sent" && (
+                      <p
+                        role="status"
+                        className="mt-2 text-sm font-medium text-teal-700"
+                      >
+                        We sent a password reset link to{" "}
+                        <strong>{pwEmail.trim()}</strong>. It expires soon.
+                      </p>
+                    )}
+                    {resetStatus === "error" && (
+                      <p role="alert" className="mt-2 text-sm text-red-700">
+                        {resetMessage}
+                      </p>
+                    )}
                   </div>
                   {pwStatus === "error" && (
-                    <p role="alert" className="text-sm font-medium text-red-700">
-                      {pwMessage}
-                    </p>
+                    <div
+                      role="alert"
+                      className="rounded-xl bg-red-50 p-4 ring-1 ring-red-200"
+                    >
+                      <p className="text-sm font-medium text-red-800">
+                        {pwMessage}
+                      </p>
+                      {pwResendConfirm ? (
+                        <button
+                          type="button"
+                          onClick={resendSignupEmail}
+                          disabled={cooldown > 0 || resending}
+                          className="tap-target mt-1 text-sm font-semibold text-brand-dark underline disabled:text-slate-400 disabled:no-underline"
+                        >
+                          {resending
+                            ? "Sending…"
+                            : cooldown > 0
+                              ? `Resend confirmation (${cooldown}s)`
+                              : "Resend confirmation email"}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={signInWithGoogle}
+                          className="tap-target mt-1 text-sm font-semibold text-brand-dark underline"
+                        >
+                          Skip the wait, continue with Google instead
+                        </button>
+                      )}
+                    </div>
                   )}
                   <button
                     type="submit"
@@ -465,7 +622,7 @@ export default function LoginForm({ intent }: { intent: string | null }) {
               )}
               <button
                 type="button"
-                onClick={() => setShowPassword(false)}
+                onClick={leavePasswordMode}
                 className="tap-target mt-4 w-full text-center text-sm font-semibold text-slate-500 underline"
               >
                 Back to email link

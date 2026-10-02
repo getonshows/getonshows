@@ -10,6 +10,7 @@ import type {
   GuestModuleRow,
   HostModuleRow,
   ProfileRow,
+  Role,
   TopicRow,
 } from "@/lib/types";
 
@@ -35,7 +36,7 @@ export default async function PublicProfilePage({
   const p = (profile ?? null) as ProfileRow | null;
   if (!p) notFound();
 
-  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }] =
+  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }, { data: roleData }] =
     await Promise.all([
       supabase
         .from("host_profiles")
@@ -50,9 +51,14 @@ export default async function PublicProfilePage({
       supabase.from("profile_topics").select("topic_id").eq("profile_id", p.id),
       supabase.rpc("profile_public_stats", { pid: p.id }),
       supabase.rpc("profile_collaborations", { pid: p.id }),
+      supabase.rpc("profile_role", { pid: p.id }),
     ]);
   const hostModule = (host ?? null) as HostModuleRow | null;
   const guestModule = (guest ?? null) as GuestModuleRow | null;
+  const canonicalRole =
+    roleData === "host" || roleData === "guest" || roleData === "dual"
+      ? (roleData as Role)
+      : null;
 
   const topicIds = ((pts ?? []) as { topic_id: string }[]).map(
     (r) => r.topic_id
@@ -107,6 +113,7 @@ export default async function PublicProfilePage({
           hostModule={hostModule}
           guestModule={guestModule}
           topics={topics}
+          role={canonicalRole}
         />
 
         {badges.length > 0 && (

@@ -2,10 +2,12 @@ import type {
   GuestModuleRow,
   HostModuleRow,
   ProfileRow,
+  Role,
   TopicRow,
 } from "@/lib/types";
 import RoleBadge, { roleFromModules } from "./RoleBadge";
 import { summarizeAvailability } from "@/lib/availability";
+import { normalizeUrl, isHostModuleComplete, isGuestModuleComplete } from "@/lib/publish-validation";
 
 function Section({
   title,
@@ -32,7 +34,7 @@ function LinkList({ links }: { links: { label: string; url: string }[] }) {
       {usable.map((l, i) => (
         <li key={i}>
           <a
-            href={l.url}
+            href={normalizeUrl(l.url)}
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-brand-dark underline"
@@ -54,17 +56,33 @@ export default function OneSheet({
   hostModule,
   guestModule,
   topics,
+  role,
 }: {
   profile: ProfileRow;
   hostModule: HostModuleRow | null;
   guestModule: GuestModuleRow | null;
   topics: TopicRow[];
+  /** Canonical users.role. When provided, the badge and visible sections
+   * follow it; otherwise they are derived from the complete modules. */
+  role?: Role | null;
 }) {
   const formatLabels: Record<string, string> = {
     remote: "Remote",
     in_person: "In person",
     both: "Remote or in person",
   };
+
+  // Role sections: complete module AND included in the canonical role.
+  const showHostSection =
+    !role || role === "host" || role === "dual";
+  const showGuestSection =
+    !role || role === "guest" || role === "dual";
+  const badgeRole: Role =
+    role ??
+    roleFromModules(
+      isHostModuleComplete(hostModule) ? hostModule : null,
+      isGuestModuleComplete(guestModule) ? guestModule : null
+    );
 
   return (
     <div className="space-y-5">
@@ -94,7 +112,7 @@ export default function OneSheet({
               <p className="mt-1 text-sm text-navy-200">📍 {profile.location}</p>
             )}
             <div className="mt-2">
-              <RoleBadge role={roleFromModules(hostModule, guestModule)} />
+              <RoleBadge role={badgeRole} />
             </div>
           </div>
         </div>
@@ -118,7 +136,7 @@ export default function OneSheet({
         </Section>
       )}
 
-      {hostModule && (
+      {showHostSection && isHostModuleComplete(hostModule) && (
         <Section title="As a host">
           <dl className="space-y-3">
             {hostModule.show_name && (
@@ -127,7 +145,7 @@ export default function OneSheet({
                 <dd className="font-semibold text-navy-900">
                   {hostModule.show_url ? (
                     <a
-                      href={hostModule.show_url}
+                      href={normalizeUrl(hostModule.show_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-brand-dark underline"
@@ -170,7 +188,7 @@ export default function OneSheet({
             {hostModule.booking_url && (
               <div>
                 <a
-                  href={hostModule.booking_url}
+                  href={normalizeUrl(hostModule.booking_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="tap-target inline-flex items-center justify-center rounded-xl bg-brand px-6 font-semibold text-white hover:bg-brand-dark"
@@ -183,7 +201,7 @@ export default function OneSheet({
         </Section>
       )}
 
-      {guestModule && (
+      {showGuestSection && isGuestModuleComplete(guestModule) && (
         <Section title="As a guest">
           <dl className="space-y-3">
             {guestModule.expertise && (

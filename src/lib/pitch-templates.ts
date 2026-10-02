@@ -92,10 +92,24 @@ export function renderTemplate(
   body: string,
   values: Record<"theirName" | "showName" | "myName" | "myTitle" | "myShowName", string>
 ): string {
-  return body.replace(/\{(\w+)\}/g, (_, key: string) =>
-    key in values ? values[key as keyof typeof values] : ""
-  );
+  return body.replace(/\{(\w+)\}/g, (_, key: string) => {
+    const v = key in values ? values[key as keyof typeof values] : "";
+    if (v.trim() !== "") return v;
+    // Never render a token as empty ("host of :"). Emit a bracketed prompt
+    // instead: the composer blocks sending until every bracket is filled.
+    const prompt = EMPTY_TOKEN_PROMPTS[key];
+    return prompt ? `[${prompt}]` : "";
+  });
 }
+
+/** Bracketed prompts inserted when a {token} has no value. */
+const EMPTY_TOKEN_PROMPTS: Record<string, string> = {
+  theirName: "their name",
+  showName: "their show name",
+  myName: "your name",
+  myTitle: "your title",
+  myShowName: "your show name",
+};
 
 /** Names of [bracketed] fill-ins still present in the text. */
 export function unfilledPrompts(body: string): string[] {

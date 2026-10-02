@@ -103,7 +103,7 @@ export default function DiscoveryFilters({
           Topics
         </p>
         <div
-          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0"
           role="group"
           aria-label="Filter by topic"
         >

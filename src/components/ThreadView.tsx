@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { REPLY_CHAR_LIMIT } from "@/lib/pitch-templates";
+import { normalizeUrl } from "@/lib/publish-validation";
 import { blockUser, getBookingRequests, sendMessage, setIntent } from "@/lib/messaging";
 import type { IntentAction, ThreadData } from "@/lib/types";
 import type { BookingRequestView } from "@/components/BookingRequestCard";
@@ -19,15 +20,28 @@ const STATE_META: Record<string, { label: string; classes: string }> = {
   booked: { label: "Booked ✓", classes: "bg-teal-100 text-teal-800" },
 };
 
-export function IntentBadge({ state }: { state: string }) {
+export function IntentBadge({ state, claimed }: { state: string; claimed?: boolean }) {
   const meta = STATE_META[state] ?? STATE_META.pitched;
+  const isClaim = state === "booked" && claimed;
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.classes}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+        isClaim ? "bg-amber-100 text-amber-800" : meta.classes
+      }`}
     >
-      {meta.label}
+      {isClaim ? "Claimed" : meta.label}
     </span>
   );
+}
+
+function formatSlot(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function formatTime(iso: string): string {
@@ -170,7 +184,10 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
             )}
           </span>
         </Link>
-        <IntentBadge state={state} />
+        <IntentBadge
+          state={state}
+          claimed={state === "booked" && !conversation.agreed_at}
+        />
         <div className="relative">
           <button
             type="button"
@@ -381,12 +398,20 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
       )}
       {state === "booked" && (
         <div className="border-t border-slate-100 pt-3 text-center">
-          <p className="text-xs font-medium text-teal-700">
-            🎙️ This booking is claimed.
-          </p>
+          {conversation.agreed_at ? (
+            <p className="text-xs font-medium text-teal-700">
+              🎙️ Booking confirmed for {formatSlot(conversation.agreed_at)}.
+            </p>
+          ) : (
+            <p className="text-xs font-medium text-amber-700">
+              {conversation.booking_claimed_by === myProfileId
+                ? "You marked this booked. It is confirmed once you both agree on a time."
+                : `${other.displayName} marked this booked. It is confirmed once you both agree on a time.`}
+            </p>
+          )}
           {other.bookingUrl ? (
             <a
-              href={other.bookingUrl}
+              href={normalizeUrl(other.bookingUrl)}
               target="_blank"
               rel="noopener noreferrer"
               className="tap-target mt-2 inline-block rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700"

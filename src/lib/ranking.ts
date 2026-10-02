@@ -195,7 +195,9 @@ export function rankCandidates(args: {
       100 * (0.5 * topicSim + 0.2 * fFit + 0.15 * tFit + 0.1 * rFit + 0.05 * qFit)
     );
 
-    // Reasons: evidence-based, best first, max three.
+    // Reasons: evidence-based, best first, max three. Each reason traces to
+    // a stored field that fed the score, so a high score always has a
+    // concrete explanation (never just "same time zone").
     const reasons: string[] = [];
     if (sharedLabels.length > 0) {
       const shown = sharedLabels.slice(0, 2).join(" & ");
@@ -203,7 +205,17 @@ export function rankCandidates(args: {
         sharedLabels.length > 2 ? ` +${sharedLabels.length - 2} more` : "";
       reasons.push(`You both cover ${shown}${extra}`);
     } else if (usedEmbedding && cos >= 0.72) {
-      reasons.push("Closely related focus areas");
+      // No shared tags, but the embedding similarity drove the score: name
+      // the candidate's actual topics so the reason is verifiable.
+      const theirTopics = c.topics
+        .slice(0, 2)
+        .map((t) => t.label)
+        .filter(Boolean);
+      reasons.push(
+        theirTopics.length > 0
+          ? `Close to your focus: they cover ${theirTopics.join(" & ")}`
+          : "Closely related focus areas"
+      );
     }
     const fmt = c.hostModule?.format;
     if (fmt && (fmt === "remote" || fmt === "both")) {

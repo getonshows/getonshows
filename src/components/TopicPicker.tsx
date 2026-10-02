@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { addCustomTopic } from "@/lib/actions";
+import { topicMatchesLabel } from "@/lib/topic-search";
 import type { TopicRow } from "@/lib/types";
 
 const MAX_CUSTOM_TOPICS = 3;
@@ -28,7 +29,7 @@ export default function TopicPicker({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return all;
-    return all.filter((t) => t.label.toLowerCase().includes(q));
+    return all.filter((t) => topicMatchesLabel(t.label, q));
   }, [all, query]);
 
   function toggle(id: string) {

@@ -68,7 +68,7 @@ export default function MatchCard({
             {p.display_name}
           </h2>
           {headline && (
-            <p className="truncate text-sm text-slate-600">{headline}</p>
+            <p className="line-clamp-2 text-sm text-slate-600">{headline}</p>
           )}
           {p.location && (
             <p className="truncate text-sm text-slate-500">📍 {p.location}</p>

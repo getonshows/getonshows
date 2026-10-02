@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { logServerEvent } from "@/lib/messaging";
-import { validatePublish, isUrl } from "@/lib/publish-validation";
+import { validatePublish, isUrl, normalizeUrl, isHostModuleComplete, isGuestModuleComplete } from "@/lib/publish-validation";
 import type {
   BuilderData,
   Collaboration,
@@ -190,6 +190,8 @@ export interface ProfileHomeData {
   profile: ProfileRow | null;
   hasHostModule: boolean;
   hasGuestModule: boolean;
+  hostComplete: boolean;
+  guestComplete: boolean;
   topicCount: number;
 }
 
@@ -269,19 +271,25 @@ export async function loadProfileHome(): Promise<ProfileHomeData> {
 
   let hasHostModule = false;
   let hasGuestModule = false;
+  let hostComplete = false;
+  let guestComplete = false;
   let topicCount = 0;
   if (profileRow) {
-    const [{ count: h }, { count: g }, { count: t }] = await Promise.all([
-      supabase.from("host_profiles").select("profile_id", { count: "exact", head: true }).eq("profile_id", profileRow.id),
-      supabase.from("guest_profiles").select("profile_id", { count: "exact", head: true }).eq("profile_id", profileRow.id),
+    const [{ data: h }, { data: g }, { count: t }] = await Promise.all([
+      supabase.from("host_profiles").select("show_name, format, guest_criteria, guest_brief").eq("profile_id", profileRow.id).maybeSingle(),
+      supabase.from("guest_profiles").select("expertise, talking_points").eq("profile_id", profileRow.id).maybeSingle(),
       supabase.from("profile_topics").select("profile_id", { count: "exact", head: true }).eq("profile_id", profileRow.id),
     ]);
-    hasHostModule = (h ?? 0) > 0;
-    hasGuestModule = (g ?? 0) > 0;
+    const hostRow = (h ?? null) as HostModuleRow | null;
+    const guestRow = (g ?? null) as GuestModuleRow | null;
+    hasHostModule = hostRow !== null;
+    hasGuestModule = guestRow !== null;
+    hostComplete = isHostModuleComplete(hostRow);
+    guestComplete = isGuestModuleComplete(guestRow);
     topicCount = t ?? 0;
   }
 
-  return { userRow, profile: profileRow, hasHostModule, hasGuestModule, topicCount };
+  return { userRow, profile: profileRow, hasHostModule, hasGuestModule, hostComplete, guestComplete, topicCount };
 }
 
 // ---------------------------------------------------------------------------
@@ -292,7 +300,7 @@ function toLinkArray(
   links: { label: string; url: string }[]
 ): { label: string; url: string }[] {
   return links
-    .map((l) => ({ label: l.label.trim().slice(0, 60), url: l.url.trim().slice(0, 500) }))
+    .map((l) => ({ label: l.label.trim().slice(0, 60), url: normalizeUrl(l.url.trim()).slice(0, 500) }))
     .filter((l) => l.label !== "" || l.url !== "");
 }
 
@@ -413,15 +421,15 @@ export async function saveDraft(
         {
           profile_id: profile.id,
           show_name: h.showName.trim().slice(0, 160) || null,
-          show_url: h.showUrl.trim().slice(0, 500) || null,
+          show_url: normalizeUrl(h.showUrl.trim()).slice(0, 500) || null,
           format: h.format === "" ? null : h.format,
           medium: h.medium === "" ? null : h.medium,
           cadence: h.cadence.trim().slice(0, 60) || null,
           episode_length_minutes: h.episodeLengthMinutes.trim() === "" ? null : Number(h.episodeLengthMinutes) || null,
           guest_criteria: h.guestCriteria.trim().slice(0, 2000) || null,
           guest_brief: h.guestBrief.trim().slice(0, 2000) || null,
-          booking_url: h.bookingUrl.trim().slice(0, 500) || null,
-          recent_episode_url: h.recentEpisodeUrl.trim().slice(0, 500) || null,
+          booking_url: normalizeUrl(h.bookingUrl.trim()).slice(0, 500) || null,
+          recent_episode_url: normalizeUrl(h.recentEpisodeUrl.trim()).slice(0, 500) || null,
         },
         { onConflict: "profile_id" }
       );
@@ -436,7 +444,7 @@ export async function saveDraft(
           expertise: g.expertise.trim().slice(0, 2000) || null,
           talking_points: g.talkingPoints.map((t) => t.trim().slice(0, 300)).filter(Boolean),
           proof_links: toLinkArray(g.proofLinks),
-          booking_url: g.bookingUrl.trim().slice(0, 500) || null,
+          booking_url: normalizeUrl(g.bookingUrl.trim()).slice(0, 500) || null,
         },
         { onConflict: "profile_id" }
       );

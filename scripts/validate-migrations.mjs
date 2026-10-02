@@ -336,8 +336,8 @@ const quota1 = await asUser(
   `select public.pitch_quota(false) as q`
 );
 check(
-  'quota peek allows fresh account with limit 3',
-  quota1.rows[0].q.allowed === true && quota1.rows[0].q.limit === 3
+  'quota peek allows fresh account with limit 5',
+  quota1.rows[0].q.allowed === true && quota1.rows[0].q.limit === 5
 );
 
 const quota2 = await asUser(
@@ -346,7 +346,7 @@ const quota2 = await asUser(
 );
 check(
   'quota consume decrements remaining',
-  quota2.rows[0].q.allowed === true && quota2.rows[0].q.remaining === 2
+  quota2.rows[0].q.allowed === true && quota2.rows[0].q.remaining === 4
 );
 
 let quotaRowVisible = false;
@@ -454,6 +454,19 @@ const reportCols = await db.query(`
     and column_name = 'conversation_id'
 `);
 check('reports links to conversations', reportCols.rows.length === 1);
+
+const agreedCols = await db.query(`
+  select column_name from information_schema.columns
+  where table_schema = 'public' and table_name = 'conversations'
+    and column_name = 'agreed_at'
+`);
+check('conversations carries agreed_at for confirmed bookings', agreedCols.rows.length === 1);
+
+const roleFn = await db.query(`
+  select routine_name from information_schema.routines
+  where routine_schema = 'public' and routine_name = 'profile_role'
+`);
+check('profile_role() exists for canonical role labels', roleFn.rows.length === 1);
 
 await db.exec(`reset role;`);
 

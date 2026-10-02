@@ -9,7 +9,10 @@ function formatDate(iso: string | null): string | null {
   return d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
 }
 
-/** Past booked collaborations, with links to each collaborator's profile. */
+/** Booked collaborations, with links to each collaborator's profile.
+ * Listed from conversation state "booked": that means a booking was claimed
+ * or confirmed, not that the recording happened. Copy must not claim a
+ * completed recording. */
 export default function Collaborations({
   items,
 }: {
@@ -25,7 +28,7 @@ export default function Collaborations({
         id="collabs-heading"
         className="text-lg font-semibold text-navy-900"
       >
-        Past collaborations
+        Bookings
       </h2>
       <ul className="mt-3 space-y-2">
         {items.map((c) => {
@@ -61,7 +64,7 @@ export default function Collaborations({
                       className={`h-2 w-2 rounded-full ${c.my_role === "host" ? "bg-brand" : "bg-navy-800"}`}
                       aria-hidden="true"
                     />
-                    {c.my_role === "host" ? "You hosted" : "You guested"}
+                    {c.my_role === "host" ? "Booked as host" : "Booked as guest"}
                     {date ? ` · ${date}` : ""}
                   </p>
                 </div>

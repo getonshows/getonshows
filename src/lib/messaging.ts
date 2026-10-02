@@ -788,7 +788,7 @@ export async function proposeBooking(
     conversationId
   );
   if (conversation.state !== "interested") {
-    return { ok: false, error: "Booking opens once you're both interested." };
+    return { ok: false, error: "Mark this conversation Interested to unlock booking." };
   }
   const iso = asIsoList(slots);
   if (!iso || iso.length < 1 || iso.length > 3) {
@@ -861,7 +861,7 @@ export async function respondBooking(
 
   if (action === "accept") {
     if (conversation.state !== "interested") {
-      return { ok: false, error: "Booking opens once you're both interested." };
+      return { ok: false, error: "This conversation is no longer open for booking." };
     }
     const iso = slotIso ? asIsoList([slotIso])?.[0] ?? null : null;
     if (!iso || !r.slots.includes(iso)) {
@@ -880,6 +880,8 @@ export async function respondBooking(
       .update({
         state: "booked",
         booking_claimed_by: myProfileId,
+        booking_confirmed: true,
+        agreed_at: iso,
         state_changed_at: now,
         state_changed_by_profile_id: myProfileId,
       })

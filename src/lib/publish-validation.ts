@@ -20,6 +20,27 @@ export function isUrl(value: string): boolean {
 }
 
 /**
+ * Whether a role section is complete enough to show publicly. A module row
+ * exists as soon as the builder saves a draft, so "row exists" is not the
+ * same as "ready to display". Incomplete sections stay hidden on the
+ * public one-sheet instead of rendering empty.
+ */
+export function isHostModuleComplete(host: HostModuleRow | null): host is HostModuleRow {
+  return !!(
+    host?.show_name?.trim() &&
+    host?.format &&
+    host?.guest_criteria?.trim() &&
+    host?.guest_brief?.trim()
+  );
+}
+
+export function isGuestModuleComplete(guest: GuestModuleRow | null): guest is GuestModuleRow {
+  return !!(
+    guest?.expertise?.trim() &&
+    guest?.talking_points?.some((t) => t.trim() !== "")
+  );
+}
+/**
  * PRO-02 publish gate. Returns a list of human-readable missing fields;
  * an empty list means the profile may be published. Runs identically on
  * the client (live guidance) and the server (enforcement).

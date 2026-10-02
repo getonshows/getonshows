@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { logServerEvent } from "@/lib/messaging";
+import { logServerEvent, getPitchQuota } from "@/lib/messaging";
 import OneSheet from "@/components/OneSheet";
 import PitchButton from "@/components/PitchButton";
 import SafetyActions from "@/components/SafetyActions";
@@ -65,16 +65,22 @@ export default async function DiscoverProfilePage({
     .maybeSingle();
   const role = ((userRow as { role: string } | null)?.role ?? "guest") as Role;
 
-  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }] =
+  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }, { data: targetRole }, quota] =
     await Promise.all([
       supabase.from("host_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
       supabase.from("guest_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
       supabase.from("profile_topics").select("topic_id").eq("profile_id", p.id),
       supabase.rpc("profile_public_stats", { pid: p.id }),
       supabase.rpc("profile_collaborations", { pid: p.id }),
+      supabase.rpc("profile_role", { pid: p.id }),
+      getPitchQuota(),
     ]);
   const hostModule = (host ?? null) as HostModuleRow | null;
   const guestModule = (guest ?? null) as GuestModuleRow | null;
+  const targetCanonicalRole =
+    targetRole === "host" || targetRole === "guest" || targetRole === "dual"
+      ? (targetRole as Role)
+      : null;
 
   // Pitch direction: hosts invite guests, guests pitch shows.
   const asRole: "host" | "guest" | null =
@@ -120,6 +126,7 @@ export default async function DiscoverProfilePage({
         hostModule={hostModule}
         guestModule={guestModule}
         topics={topics}
+        role={targetCanonicalRole}
       />
       {badges.length > 0 && (
         <section
@@ -149,7 +156,7 @@ export default async function DiscoverProfilePage({
             className="w-full py-3 text-base"
           />
           <p className="mt-2 text-xs text-slate-500">
-            5 pitches per day. Make each one count.
+            {quota.limit} pitches per day. Make each one count.
           </p>
         </div>
       )}

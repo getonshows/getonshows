@@ -137,6 +137,7 @@ export interface ConversationRow {
   last_message_at: string | null;
   booking_claimed_by: string | null;
   booking_confirmed: boolean;
+  agreed_at: string | null;
   state_changed_at: string | null;
   state_changed_by_profile_id: string | null;
   created_at: string;
