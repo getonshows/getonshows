@@ -11,6 +11,7 @@ import type { BookingRequestView } from "@/components/BookingRequestCard";
 import ReportDialog from "@/components/ReportDialog";
 import BookingPicker from "@/components/BookingPicker";
 import BookingRequestCard from "@/components/BookingRequestCard";
+import RatingPrompt from "@/components/RatingPrompt";
 
 const STATE_META: Record<string, { label: string; classes: string }> = {
   pitched: { label: "Pitched", classes: "bg-amber-100 text-amber-800" },
@@ -523,6 +524,13 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
             </p>
           )}
           <RecordingConfirm conversation={conversation} myProfileId={myProfileId} />
+          {conversation.completed_at && (
+            <RatingPrompt
+              conversationId={conversation.id}
+              otherName={other.displayName}
+              otherRole={other.isHost ? "host" : "guest"}
+            />
+          )}
         </div>
       )}
       {archived && state === "passed" && (

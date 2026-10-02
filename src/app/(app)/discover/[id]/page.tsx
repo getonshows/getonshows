@@ -66,7 +66,7 @@ export default async function DiscoverProfilePage({
     .maybeSingle();
   const role = ((userRow as { role: string } | null)?.role ?? "guest") as Role;
 
-  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }, { data: targetRole }, quota] =
+  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }, { data: targetRole }, { data: ratingsData }, quota] =
     await Promise.all([
       supabase.from("host_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
       supabase.from("guest_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
@@ -74,6 +74,7 @@ export default async function DiscoverProfilePage({
       supabase.rpc("profile_public_stats", { pid: p.id }),
       supabase.rpc("profile_collaborations", { pid: p.id }),
       supabase.rpc("profile_role", { pid: p.id }),
+      supabase.rpc("profile_ratings", { pid: p.id }),
       getPitchQuota(),
     ]);
   const hostModule = (host ?? null) as HostModuleRow | null;
@@ -168,6 +169,10 @@ export default async function DiscoverProfilePage({
         topics={topics}
         role={targetCanonicalRole}
         matchReasons={matchReasons}
+        ratings={(ratingsData ?? null) as {
+          as_host: { avg: number; count: number } | null;
+          as_guest: { avg: number; count: number } | null;
+        } | null}
       />
       {badges.length > 0 && (
         <section

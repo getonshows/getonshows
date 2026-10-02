@@ -24,11 +24,12 @@ export default async function ProfileViewPage() {
   const p = (profile ?? null) as ProfileRow | null;
   if (!p || p.state !== "published") redirect("/profile/builder");
 
-  const [{ data: host }, { data: guest }, { data: pts }, { data: userRow }] = await Promise.all([
+  const [{ data: host }, { data: guest }, { data: pts }, { data: userRow }, { data: ratingsData }] = await Promise.all([
     supabase.from("host_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
     supabase.from("guest_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
     supabase.from("profile_topics").select("topic_id").eq("profile_id", p.id),
     supabase.from("users").select("role").eq("id", user.id).maybeSingle(),
+    supabase.rpc("profile_ratings", { pid: p.id }),
   ]);
   const ownRole = (userRow as { role?: string } | null)?.role;
   const canonicalRole =
@@ -59,6 +60,10 @@ export default async function ProfileViewPage() {
         guestModule={(guest ?? null) as GuestModuleRow | null}
         topics={topics}
         role={canonicalRole}
+        ratings={(ratingsData ?? null) as {
+          as_host: { avg: number; count: number } | null;
+          as_guest: { avg: number; count: number } | null;
+        } | null}
       />
     </div>
   );

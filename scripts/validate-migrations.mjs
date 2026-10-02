@@ -531,6 +531,23 @@ check(
     statsFn.rows[0].prosrc.includes('bookings_completed')
 );
 
+const ratingsTable = await db.query(`
+  select 1 from information_schema.tables
+  where table_schema = 'public' and table_name = 'ratings'
+`);
+check('ratings table exists', ratingsTable.rows.length === 1);
+
+const ratingsFn = await db.query(`
+  select prosrc from pg_proc
+  where proname = 'profile_ratings'
+`);
+check(
+  'profile_ratings() returns per-role aggregates',
+  ratingsFn.rows.length === 1 &&
+    ratingsFn.rows[0].prosrc.includes('as_host') &&
+    ratingsFn.rows[0].prosrc.includes('as_guest')
+);
+
 await db.exec(`reset role;`);
 
 console.log(failures === 0 ? '\nAll migration checks passed.' : `\n${failures} check(s) failed.`);

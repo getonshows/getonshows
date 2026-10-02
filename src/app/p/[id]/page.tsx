@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import OneSheet from "@/components/OneSheet";
 import { computeBadges } from "@/lib/badges";
 import Collaborations from "@/components/Collaborations";
+import RatingsSummary, { type RatingSummary } from "@/components/RatingsSummary";
 import type {
   Collaboration,
   GuestModuleRow,
@@ -91,7 +92,7 @@ export default async function PublicProfilePage({
   const p = (profile ?? null) as ProfileRow | null;
   if (!p) notFound();
 
-  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }, { data: roleData }] =
+  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }, { data: roleData }, { data: ratingsData }] =
     await Promise.all([
       supabase
         .from("host_profiles")
@@ -107,6 +108,7 @@ export default async function PublicProfilePage({
       supabase.rpc("profile_public_stats", { pid: p.id }),
       supabase.rpc("profile_collaborations", { pid: p.id }),
       supabase.rpc("profile_role", { pid: p.id }),
+      supabase.rpc("profile_ratings", { pid: p.id }),
     ]);
   const hostModule = (host ?? null) as HostModuleRow | null;
   const guestModule = (guest ?? null) as GuestModuleRow | null;
@@ -210,6 +212,8 @@ export default async function PublicProfilePage({
         )}
 
         <Collaborations items={collaborations} />
+
+        <RatingsSummary ratings={(ratingsData ?? null) as RatingSummary | null} />
 
         <section className="rounded-2xl bg-navy-800 p-6 text-center text-white">
           <h2 className="text-xl font-bold">

@@ -58,6 +58,7 @@ export default function OneSheet({
   topics,
   role,
   matchReasons,
+  ratings,
 }: {
   profile: ProfileRow;
   hostModule: HostModuleRow | null;
@@ -68,6 +69,11 @@ export default function OneSheet({
   role?: Role | null;
   /** Why this profile matches the viewer (discovery only). */
   matchReasons?: string[];
+  /** Compact rating summary shown under the name. */
+  ratings?: {
+    as_host: { avg: number; count: number } | null;
+    as_guest: { avg: number; count: number } | null;
+  } | null;
 }) {
   const formatLabels: Record<string, string> = {
     remote: "Remote",
@@ -117,6 +123,21 @@ export default function OneSheet({
             <div className="mt-2">
               <RoleBadge role={badgeRole} />
             </div>
+            {ratings && (ratings.as_host || ratings.as_guest) && (
+              <p className="mt-2 text-sm text-navy-100">
+                <span className="text-amber-300">★</span>{" "}
+                {[
+                  ratings.as_host
+                    ? `${ratings.as_host.avg.toFixed(1)} as host (${ratings.as_host.count})`
+                    : null,
+                  ratings.as_guest
+                    ? `${ratings.as_guest.avg.toFixed(1)} as guest (${ratings.as_guest.count})`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
           </div>
         </div>
         {profile.bio && (
