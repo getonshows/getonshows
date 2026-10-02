@@ -34,7 +34,7 @@ export default function PitchButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`tap-target rounded-xl bg-navy px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy/90 ${className}`}
+        className={`tap-target rounded-xl bg-navy-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800/90 ${className}`}
       >
         {label}
       </button>
@@ -154,7 +154,7 @@ function PitchComposer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-navy/50 p-0 sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-navy-800/50 p-0 sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Send a pitch"
@@ -196,7 +196,7 @@ function PitchComposer({
                     onClose();
                     router.push(`/inbox/${ctx.existingConversationId}`);
                   }}
-                  className="tap-target mt-4 rounded-xl bg-navy px-5 py-2.5 text-sm font-semibold text-white"
+                  className="tap-target mt-4 rounded-xl bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white"
                 >
                   Open conversation
                 </button>
@@ -223,7 +223,7 @@ function PitchComposer({
                   onClose();
                   router.push(`/inbox/${ctx.existingConversationId}`);
                 }}
-                className="tap-target mt-4 rounded-xl bg-navy px-5 py-2.5 text-sm font-semibold text-white"
+                className="tap-target mt-4 rounded-xl bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white"
               >
                 Open conversation
               </button>
@@ -255,7 +255,7 @@ function PitchComposer({
                     onClick={() => pickTemplate(t.id)}
                     className={`tap-target shrink-0 rounded-full border px-3.5 py-2 text-xs font-semibold transition ${
                       t.id === templateId
-                        ? "border-navy bg-navy text-white"
+                        ? "border-navy bg-navy-800 text-white"
                         : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                     }`}
                   >
@@ -315,7 +315,7 @@ function PitchComposer({
               type="button"
               onClick={handleSend}
               disabled={!canSend}
-              className="tap-target w-full rounded-xl bg-navy py-3 text-sm font-semibold text-white transition hover:bg-navy/90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="tap-target w-full rounded-xl bg-navy-800 py-3 text-sm font-semibold text-white transition hover:bg-navy-800/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {sending ? "Sending…" : "Send pitch"}
             </button>

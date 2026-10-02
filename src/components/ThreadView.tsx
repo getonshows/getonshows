@@ -140,7 +140,7 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
               className="h-10 w-10 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-semibold text-white">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy-800 text-sm font-semibold text-white">
               {other.displayName.charAt(0).toUpperCase()}
             </span>
           )}
@@ -220,7 +220,7 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
               <div
                 className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                   m.sender_profile_id === myProfileId
-                    ? "rounded-br-md bg-navy text-white"
+                    ? "rounded-br-md bg-navy-800 text-white"
                     : "rounded-bl-md bg-white text-navy shadow-sm ring-1 ring-slate-100"
                 }`}
               >
@@ -366,7 +366,7 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
               type="button"
               onClick={handleSend}
               disabled={sending || reply.trim().length === 0 || replyLen > REPLY_CHAR_LIMIT}
-              className="tap-target shrink-0 rounded-xl bg-navy px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy/90 disabled:opacity-40"
+              className="tap-target shrink-0 rounded-xl bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800/90 disabled:opacity-40"
             >
               {sending ? "…" : "Send"}
             </button>
@@ -386,7 +386,7 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
       {/* Block confirmation */}
       {confirmBlock && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-navy/50 p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-800/50 p-6"
           role="dialog"
           aria-modal="true"
           aria-label="Confirm block"

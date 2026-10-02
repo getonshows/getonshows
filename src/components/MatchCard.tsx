@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PitchButton from "@/components/PitchButton";
+import RoleBadge, { roleFromModules } from "@/components/RoleBadge";
 import type { RankedCandidate } from "@/lib/ranking";
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -72,6 +73,11 @@ export default function MatchCard({
           {p.location && (
             <p className="truncate text-sm text-slate-500">📍 {p.location}</p>
           )}
+          <div className="mt-1.5">
+            <RoleBadge
+              role={roleFromModules(match.hostModule, match.guestModule)}
+            />
+          </div>
           {formatBits.length > 0 && (
             <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-slate-500">
               {formatBits.filter(Boolean).join(" · ")}

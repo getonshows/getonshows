@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { switchRole } from "@/lib/actions";
 
 const OPTIONS = [
-  { value: "host", label: "Host" },
-  { value: "guest", label: "Guest" },
-  { value: "dual", label: "Both" },
+  { value: "host", label: "Host", dot: "bg-brand", active: "bg-brand text-white shadow" },
+  { value: "guest", label: "Guest", dot: "bg-navy-800", active: "bg-navy-800 text-white shadow" },
+  { value: "dual", label: "Both", dot: "bg-gradient-to-r from-brand to-navy-800", active: "bg-gradient-to-r from-brand to-navy-800 text-white shadow" },
 ] as const;
 
 /**
@@ -61,12 +61,14 @@ export default function RoleSwitcher({
               aria-checked={active}
               disabled={pending || active}
               onClick={() => onSwitch(opt.value)}
-              className={`tap-target rounded-full px-5 py-2 text-sm font-semibold transition ${
-                active
-                  ? "bg-navy-800 text-white shadow"
-                  : "text-slate-600 hover:text-navy-900"
+              className={`tap-target inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition ${
+                active ? opt.active : "text-slate-600 hover:text-navy-900"
               } disabled:cursor-default`}
             >
+              <span
+                className={`h-2 w-2 rounded-full ${opt.dot}`}
+                aria-hidden="true"
+              />
               {opt.label}
             </button>
           );

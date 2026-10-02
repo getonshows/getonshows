@@ -49,7 +49,7 @@ export default function ReportDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-navy/50 p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-navy-800/50 p-6"
       role="dialog"
       aria-modal="true"
       aria-label={`Report ${targetName}`}
@@ -71,7 +71,7 @@ export default function ReportDialog({
             <button
               type="button"
               onClick={onClose}
-              className="tap-target mt-5 w-full rounded-xl bg-navy py-2.5 text-sm font-semibold text-white"
+              className="tap-target mt-5 w-full rounded-xl bg-navy-800 py-2.5 text-sm font-semibold text-white"
             >
               Done
             </button>
@@ -132,7 +132,7 @@ export default function ReportDialog({
                 type="button"
                 onClick={handleSubmit}
                 disabled={!reason || sending}
-                className="tap-target flex-1 rounded-xl bg-navy py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                className="tap-target flex-1 rounded-xl bg-navy-800 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
               >
                 {sending ? "Sending…" : "Submit report"}
               </button>

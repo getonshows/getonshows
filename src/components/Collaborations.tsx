@@ -56,7 +56,11 @@ export default function Collaborations({
                   <p className="truncate font-semibold text-navy-900">
                     {c.display_name ?? "Member"}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <span
+                      className={`h-2 w-2 rounded-full ${c.my_role === "host" ? "bg-brand" : "bg-navy-800"}`}
+                      aria-hidden="true"
+                    />
                     {c.my_role === "host" ? "You hosted" : "You guested"}
                     {date ? ` · ${date}` : ""}
                   </p>

@@ -4,6 +4,7 @@ import type {
   ProfileRow,
   TopicRow,
 } from "@/lib/types";
+import RoleBadge, { roleFromModules } from "./RoleBadge";
 import { summarizeAvailability } from "@/lib/availability";
 
 function Section({
@@ -92,6 +93,9 @@ export default function OneSheet({
             {profile.location && (
               <p className="mt-1 text-sm text-navy-200">📍 {profile.location}</p>
             )}
+            <div className="mt-2">
+              <RoleBadge role={roleFromModules(hostModule, guestModule)} />
+            </div>
           </div>
         </div>
         {profile.bio && (

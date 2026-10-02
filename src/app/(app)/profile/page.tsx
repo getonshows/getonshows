@@ -13,20 +13,8 @@ import { computeBadges } from "@/lib/badges";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import BadgeList from "@/components/BadgeList";
 import Collaborations from "@/components/Collaborations";
+import RoleBadge from "@/components/RoleBadge";
 import ShareProfile from "@/components/ShareProfile";
-
-function RoleBadge({ role }: { role: string }) {
-  const labels: Record<string, string> = {
-    host: "Host",
-    guest: "Guest",
-    dual: "Host + Guest",
-  };
-  return (
-    <span className="inline-block rounded-full bg-navy-800 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-      {labels[role] ?? role}
-    </span>
-  );
-}
 
 function StateCard({
   state,
@@ -188,7 +176,9 @@ export default async function ProfileHomePage() {
               <p className="truncate text-sm text-slate-600">{profile.title}</p>
             )}
             <div className="mt-1.5">
-              <RoleBadge role={userRow.role} />
+              <RoleBadge
+                role={userRow.role as "host" | "guest" | "dual"}
+              />
             </div>
           </div>
         </div>

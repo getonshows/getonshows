@@ -42,7 +42,7 @@ export default async function InboxPage() {
           </p>
           <Link
             href="/discover"
-            className="tap-target mt-5 inline-block rounded-xl bg-navy px-6 py-3 text-sm font-semibold text-white"
+            className="tap-target mt-5 inline-block rounded-xl bg-navy-800 px-6 py-3 text-sm font-semibold text-white"
           >
             Browse Discover
           </Link>
@@ -64,7 +64,7 @@ export default async function InboxPage() {
                       className="h-12 w-12 rounded-full object-cover"
                     />
                   ) : (
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-navy text-base font-semibold text-white">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-navy-800 text-base font-semibold text-white">
                       {t.other.displayName.charAt(0).toUpperCase()}
                     </span>
                   )}
