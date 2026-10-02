@@ -21,6 +21,15 @@ const STAGE_LABELS: Record<string, string> = {
   pitch_sent: "Sent a pitch",
   message_replied: "Got a reply",
   booking_marked: "Marked booked",
+  recording_completed: "Confirmed recording",
+};
+
+const BUILDER_STEP_LABELS: Record<string, string> = {
+  basics: "Basics",
+  topics: "Topics",
+  show: "Your show",
+  story: "Your story",
+  review: "Review and publish",
 };
 
 function isAdminEmail(email: string | undefined): boolean {
@@ -49,14 +58,16 @@ export default async function FunnelPage() {
   await logServerEvent(supabase, user.id, "admin_view", { page: "funnel" });
 
   const { data, error } = await supabase.rpc("funnel_counts");
-  const funnel = (data ?? { stages: [], by_source: [] }) as {
+  const funnel = (data ?? { stages: [], by_source: [], builder: [] }) as {
     since: string;
     stages: StageCount[];
     by_source: SourceCount[];
+    builder: { step: string; users: number }[];
   };
 
   const stages = funnel.stages ?? [];
   const bySource = (funnel.by_source ?? []).sort((a, b) => b.signups - a.signups);
+  const builderSteps = funnel.builder ?? [];
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -111,6 +122,52 @@ export default async function FunnelPage() {
             )}
           </tbody>
         </table>
+      </section>
+
+      <section aria-label="Profile builder drop-off" className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">
+        <h2 className="border-b border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-navy-900">
+          Profile builder
+        </h2>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50 text-left">
+              <th scope="col" className="px-4 py-3 font-semibold text-navy-900">Step</th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-navy-900">Users</th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-navy-900">Conversion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {builderSteps.map((s, i) => {
+              const prev = i > 0 ? builderSteps[i - 1].users : null;
+              const conv =
+                prev !== null && prev > 0
+                  ? `${Math.round((s.users / prev) * 100)}%`
+                  : i === 0
+                    ? "-"
+                    : "n/a";
+              return (
+                <tr key={s.step} className="border-b border-slate-100 last:border-0">
+                  <td className="px-4 py-3 font-medium text-navy-900">
+                    {BUILDER_STEP_LABELS[s.step] ?? s.step}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-700">{s.users}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-700">{conv}</td>
+                </tr>
+              );
+            })}
+            {builderSteps.length === 0 && (
+              <tr>
+                <td colSpan={3} className="px-4 py-6 text-center text-slate-500">
+                  No builder activity in the last 30 days yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+          The show and story steps only apply to matching roles, so a dip at
+          those steps is expected rather than abandonment.
+        </p>
       </section>
 
       <section aria-label="Signups by source" className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200">

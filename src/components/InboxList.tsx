@@ -146,7 +146,13 @@ export default function InboxList({ threads }: { threads: ThreadPreview[] }) {
         </div>
       ) : (
         <ul className="mt-5 space-y-2.5">
-          {filtered.map((t) => (
+          {filtered.map((t) => {
+            // Which side of this thread I was on: my profile id matches the
+            // host side or the guest side. Survives role switches, so an old
+            // guest thread is still labeled "as guest" after I become a host.
+            const myThreadRole =
+              t.conversation.host_profile_id === t.myProfileId ? "host" : "guest";
+            return (
             <li key={t.conversation.id}>
               <Link
                 href={`/inbox/${t.conversation.id}`}
@@ -200,7 +206,7 @@ export default function InboxList({ threads }: { threads: ThreadPreview[] }) {
                         : t.lastMessage.body
                       : "Say hello 👋"}
                   </span>
-                  <span className="mt-1.5 block">
+                  <span className="mt-1.5 flex items-center gap-2">
                     <IntentBadge
                       state={t.conversation.state}
                       claimed={
@@ -208,11 +214,15 @@ export default function InboxList({ threads }: { threads: ThreadPreview[] }) {
                         !t.conversation.agreed_at
                       }
                     />
+                    <span className="text-xs text-slate-400">
+                      as {myThreadRole}
+                    </span>
                   </span>
                 </span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>

@@ -6,6 +6,7 @@ import OneSheet from "@/components/OneSheet";
 import PitchButton from "@/components/PitchButton";
 import SafetyActions from "@/components/SafetyActions";
 import { computeBadges } from "@/lib/badges";
+import { buildReasons } from "@/lib/ranking";
 import Collaborations from "@/components/Collaborations";
 import type {
   Collaboration,
@@ -113,6 +114,45 @@ export default async function DiscoverProfilePage({
   }).filter((b) => b.earned);
   const collaborations = ((collabs ?? []) as Collaboration[]);
 
+  // Same evidence-based reasons the match card shows, computed for the
+  // viewer against this profile. Skipped on self-views.
+  let matchReasons: string[] = [];
+  if (p.user_id !== user.id) {
+    const { data: viewerProfile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const vp = (viewerProfile ?? null) as ProfileRow | null;
+    if (vp) {
+      const { data: vpts } = await supabase
+        .from("profile_topics")
+        .select("topic_id")
+        .eq("profile_id", vp.id);
+      const vTopicIds = ((vpts ?? []) as { topic_id: string }[]).map(
+        (r) => r.topic_id
+      );
+      let viewerTopics: TopicRow[] = [];
+      if (vTopicIds.length > 0) {
+        const { data: vt } = await supabase
+          .from("topics")
+          .select("id,label,slug,parent_id,is_custom")
+          .in("id", vTopicIds);
+        viewerTopics = (vt ?? []) as TopicRow[];
+      }
+      matchReasons = buildReasons({
+        viewerProfile: vp,
+        viewerTopics,
+        candidate: {
+          profile: p,
+          hostModule,
+          guestModule,
+          topics,
+        },
+      });
+    }
+  }
+
   return (
     <div className="mx-auto max-w-xl space-y-5">
       <Link
@@ -127,6 +167,7 @@ export default async function DiscoverProfilePage({
         guestModule={guestModule}
         topics={topics}
         role={targetCanonicalRole}
+        matchReasons={matchReasons}
       />
       {badges.length > 0 && (
         <section

@@ -1,5 +1,6 @@
 "use server";
 
+import { notifyPeer } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import type {
   BookingRequestRow,
@@ -104,6 +105,9 @@ export async function logServerEvent(
     | "pitch_sent"
     | "message_replied"
     | "booking_marked"
+    | "recording_completed"
+    | "pitch_withdrawn"
+    | "builder_step"
     | "role_switched"
     | "admin_view",
   properties: Record<string, string | number | boolean>
@@ -387,10 +391,12 @@ export async function sendPitch(input: {
 
   const { data: mine } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id,display_name")
     .eq("user_id", user.id)
     .single();
   const myPid = (mine as { id: string }).id;
+  const myName =
+    ((mine as { display_name?: string | null } | null)?.display_name ?? "Someone");
   const hostPid = input.asRole === "host" ? myPid : input.toProfileId;
   const guestPid = input.asRole === "host" ? input.toProfileId : myPid;
 
@@ -427,6 +433,13 @@ export async function sendPitch(input: {
     .eq("id", conversationId);
 
   await logEvent(supabase, user.id, "pitch_sent", { role: input.asRole });
+  await notifyPeer({
+    supabase,
+    conversationId,
+    kind: "pitch",
+    actorName: myName,
+    detail: body.length > 220 ? `${body.slice(0, 220)}...` : body,
+  });
   return { ok: true, conversationId, existing: false };
 }
 
@@ -478,6 +491,19 @@ export async function sendMessage(input: {
     await logEvent(supabase, user.id, "message_replied", {});
   }
   await supabase.from("conversations").update(updates).eq("id", conversation.id);
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", myProfileId)
+    .maybeSingle();
+  const myName =
+    ((me as { display_name?: string | null } | null)?.display_name ?? "Someone");
+  await notifyPeer({
+    supabase,
+    conversationId: conversation.id,
+    kind: "reply",
+    actorName: myName,
+  });
   return { ok: true, conversationId: conversation.id };
 }
 
@@ -826,6 +852,13 @@ export async function proposeBooking(
     body: `${myName} proposed ${iso.length === 1 ? "a time" : `${iso.length} times`} for the recording.`,
     kind: "system",
   });
+  await notifyPeer({
+    supabase,
+    conversationId,
+    kind: "booking_proposed",
+    actorName: myName,
+    detail: `${iso.length} time${iso.length === 1 ? "" : "s"}`,
+  });
   return { ok: true };
 }
 
@@ -899,6 +932,20 @@ export async function respondBooking(
       kind: "system",
     });
     await logEvent(supabase, user.id, "booking_marked", {});
+    const agreedLabel = new Date(iso).toLocaleString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    await notifyPeer({
+      supabase,
+      conversationId: r.conversation_id,
+      kind: "booking_accepted",
+      actorName: myName,
+      detail: agreedLabel,
+    });
     return { ok: true };
   }
 
@@ -926,6 +973,106 @@ export async function respondBooking(
         : `${myName} declined the proposed times.`,
     kind: "system",
   });
+  return { ok: true };
+}
+
+/** Withdraw an unanswered pitch the caller sent. Deletes the conversation
+ * (RLS allows this only for the pitcher while state = 'pitched') and
+ * refunds the daily pitch slot. */
+export async function withdrawPitch(conversationId: string): Promise<ActionResult> {
+  const { supabase, user } = await authed();
+  const { conversation, myProfileId } = await assertParticipant(
+    supabase,
+    user.id,
+    conversationId
+  );
+  if (
+    conversation.state !== "pitched" ||
+    conversation.pitched_by_profile_id !== myProfileId
+  ) {
+    return {
+      ok: false,
+      error: "Only an unanswered pitch you sent can be withdrawn.",
+    };
+  }
+  const { error } = await supabase
+    .from("conversations")
+    .delete()
+    .eq("id", conversationId);
+  if (error) {
+    return { ok: false, error: "Couldn't withdraw your pitch. Please try again." };
+  }
+  await supabase.rpc("pitch_quota_refund");
+  await logServerEvent(supabase, user.id, "pitch_withdrawn", {});
+  return { ok: true };
+}
+
+/** Confirm (or deny) that a booked recording actually happened.
+ * Only available once the agreed time has passed. When BOTH participant
+ * profiles confirm, the conversation is marked completed. A "no" from either
+ * side ends the question for them. */
+export async function confirmRecording(
+  conversationId: string,
+  didHappen: boolean
+): Promise<ActionResult> {
+  const { supabase, user } = await authed();
+  const { conversation, myProfileId } = await assertParticipant(
+    supabase,
+    user.id,
+    conversationId
+  );
+  if (conversation.state !== "booked") {
+    return { ok: false, error: "Only booked conversations can be confirmed." };
+  }
+  if (!conversation.agreed_at) {
+    return { ok: false, error: "There is no agreed time on this booking yet." };
+  }
+  if (new Date(conversation.agreed_at).getTime() > Date.now()) {
+    return { ok: false, error: "The recording has not happened yet." };
+  }
+  if (conversation.completed_at) {
+    return { ok: true };
+  }
+  const confirmed = conversation.recording_confirmed_by ?? [];
+  const declined = conversation.recording_declined_by ?? [];
+  if (confirmed.includes(myProfileId) || declined.includes(myProfileId)) {
+    return { ok: true };
+  }
+
+  if (didHappen) {
+    const next = [...confirmed, myProfileId];
+    const bothConfirmed =
+      next.includes(conversation.host_profile_id) &&
+      next.includes(conversation.guest_profile_id);
+    const updates: Record<string, unknown> = {
+      recording_confirmed_by: next,
+    };
+    if (bothConfirmed) {
+      updates.completed_at = new Date().toISOString();
+    }
+    const { error } = await supabase
+      .from("conversations")
+      .update(updates)
+      .eq("id", conversationId);
+    if (error) return { ok: false, error: "Couldn't save your confirmation." };
+    if (bothConfirmed) {
+      await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_profile_id: myProfileId,
+        body: "Both sides confirmed the recording happened.",
+        kind: "system",
+      });
+      await logServerEvent(supabase, user.id, "recording_completed", {
+        conversation_id: conversationId,
+      });
+    }
+  } else {
+    const { error } = await supabase
+      .from("conversations")
+      .update({ recording_declined_by: [...declined, myProfileId] })
+      .eq("id", conversationId);
+    if (error) return { ok: false, error: "Couldn't save your answer." };
+  }
   return { ok: true };
 }
 

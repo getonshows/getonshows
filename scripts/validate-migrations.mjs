@@ -434,6 +434,16 @@ try {
 }
 check('event names are constrained by check', badEventBlocked);
 
+const eventAllowlist = await db.query(`
+  select pg_get_constraintdef(oid) as def
+  from pg_constraint
+  where conname = 'events_name_check'
+`);
+const allowDef = eventAllowlist.rows[0]?.def ?? "";
+for (const name of ["builder_step", "pitch_withdrawn", "recording_completed"]) {
+  check(`events allowlist includes ${name}`, allowDef.includes(`'${name}'`));
+}
+
 const newCols = await db.query(`
   select column_name from information_schema.columns
   where table_schema = 'public' and table_name = 'conversations'
@@ -467,6 +477,39 @@ const roleFn = await db.query(`
   where routine_schema = 'public' and routine_name = 'profile_role'
 `);
 check('profile_role() exists for canonical role labels', roleFn.rows.length === 1);
+
+const notifCol = await db.query(`
+  select column_name from information_schema.columns
+  where table_schema = 'public' and table_name = 'users'
+    and column_name = 'email_notifications'
+`);
+check('users carries email_notifications preference', notifCol.rows.length === 1);
+
+const peerFn = await db.query(`
+  select routine_name from information_schema.routines
+  where routine_schema = 'public' and routine_name = 'conversation_peer_contact'
+`);
+check('conversation_peer_contact() exists for notification addressing', peerFn.rows.length === 1);
+
+const completionCols = await db.query(`
+  select column_name from information_schema.columns
+  where table_schema = 'public' and table_name = 'conversations'
+    and column_name in ('recording_confirmed_by','recording_declined_by','completed_at')
+`);
+check('conversations carries recording completion columns', completionCols.rows.length === 3);
+
+const refundFn = await db.query(`
+  select routine_name from information_schema.routines
+  where routine_schema = 'public' and routine_name = 'pitch_quota_refund'
+`);
+check('pitch_quota_refund() exists for pitch withdrawal', refundFn.rows.length === 1);
+
+const withdrawPolicy = await db.query(`
+  select policyname from pg_policies
+  where schemaname = 'public' and tablename = 'conversations'
+    and policyname = 'Pitcher deletes own unanswered pitch'
+`);
+check('conversations has the pitch-withdrawal delete policy', withdrawPolicy.rows.length === 1);
 
 await db.exec(`reset role;`);
 

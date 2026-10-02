@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { REPLY_CHAR_LIMIT } from "@/lib/pitch-templates";
 import { normalizeUrl } from "@/lib/publish-validation";
-import { blockUser, getBookingRequests, sendMessage, setIntent } from "@/lib/messaging";
-import type { IntentAction, ThreadData } from "@/lib/types";
+import { blockUser, confirmRecording, getBookingRequests, sendMessage, setIntent, withdrawPitch } from "@/lib/messaging";
+import type { ConversationRow, IntentAction, ThreadData } from "@/lib/types";
 import type { BookingRequestView } from "@/components/BookingRequestCard";
 import ReportDialog from "@/components/ReportDialog";
 import BookingPicker from "@/components/BookingPicker";
@@ -57,6 +57,75 @@ function formatTime(iso: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+/**
+ * After the agreed recording time passes, ask each participant whether the
+ * recording happened. Only mutual confirmation marks it completed; that is
+ * what public booking lists are allowed to call a recording.
+ */
+function RecordingConfirm({
+  conversation,
+  myProfileId,
+}: {
+  conversation: ConversationRow;
+  myProfileId: string;
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const agreedAt = conversation.agreed_at;
+
+  async function answer(didHappen: boolean) {
+    setBusy(true);
+    const res = await confirmRecording(conversation.id, didHappen);
+    if (res.ok) router.refresh();
+    setBusy(false);
+  }
+
+  if (!agreedAt || new Date(agreedAt).getTime() > Date.now()) return null;
+  if (conversation.completed_at) {
+    return (
+      <p className="mt-2 text-xs font-semibold text-teal-700">
+        Recording confirmed by both sides ✓
+      </p>
+    );
+  }
+  const confirmedBy = conversation.recording_confirmed_by ?? [];
+  const declinedBy = conversation.recording_declined_by ?? [];
+  if (confirmedBy.includes(myProfileId)) {
+    return (
+      <p className="mt-2 text-xs text-slate-500">
+        You confirmed the recording. Waiting on the other side.
+      </p>
+    );
+  }
+  if (declinedBy.includes(myProfileId)) return null;
+
+  return (
+    <div className="mx-auto mt-3 max-w-xs rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+      <p className="text-sm font-semibold text-navy-900">
+        Did this recording happen?
+      </p>
+      <div className="mt-2.5 flex gap-2">
+        <button
+          type="button"
+          onClick={() => answer(true)}
+          disabled={busy}
+          className="tap-target flex-1 rounded-xl bg-teal-600 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
+        >
+          {busy ? "…" : "Yes, we recorded"}
+        </button>
+        <button
+          type="button"
+          onClick={() => answer(false)}
+          disabled={busy}
+          className="tap-target flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+        >
+          {busy ? "…" : "No"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ThreadView({ thread }: { thread: ThreadData }) {
   const router = useRouter();
   const { conversation, messages, other, myProfileId, myDisplayName } = thread;
@@ -64,6 +133,8 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
   const [sending, setSending] = useState(false);
   const [acting, setActing] = useState(false);
   const [confirmPass, setConfirmPass] = useState(false);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [blocking, setBlocking] = useState(false);
@@ -125,6 +196,19 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
       setError(res.error ?? "Couldn't update the conversation.");
     }
     setActing(false);
+  }
+
+  async function handleWithdraw() {
+    setWithdrawing(true);
+    const res = await withdrawPitch(conversation.id);
+    if (res.ok) {
+      router.push("/inbox");
+      router.refresh();
+    } else {
+      setError(res.error ?? "Couldn't withdraw your pitch.");
+      setWithdrawing(false);
+      setConfirmWithdraw(false);
+    }
   }
 
   async function handleBlock() {
@@ -208,6 +292,19 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
                 onClick={() => setMenuOpen(false)}
               />
               <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                {state === "pitched" &&
+                  conversation.pitched_by_profile_id === myProfileId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setConfirmWithdraw(true);
+                      }}
+                      className="tap-target block w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      Withdraw pitch
+                    </button>
+                  )}
                 <button
                   type="button"
                   onClick={() => {
@@ -423,6 +520,7 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
               They haven't added a booking link — arrange the time in chat.
             </p>
           )}
+          <RecordingConfirm conversation={conversation} myProfileId={myProfileId} />
         </div>
       )}
       {archived && state === "passed" && (
@@ -469,6 +567,46 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
         <p className="mt-3 text-center text-xs text-slate-500">
           This conversation is archived and read-only.
         </p>
+      )}
+
+      {/* Withdraw confirmation */}
+      {confirmWithdraw && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-800/50 p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm withdraw"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setConfirmWithdraw(false);
+          }}
+        >
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+            <h2 className="font-serif text-lg font-semibold text-navy">
+              Withdraw your pitch?
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {other.displayName} hasn't replied yet. Withdrawing removes the
+              conversation for both of you, and you get the pitch back.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmWithdraw(false)}
+                className="tap-target flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleWithdraw}
+                disabled={withdrawing}
+                className="tap-target flex-1 rounded-xl bg-navy-800 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {withdrawing ? "Withdrawing…" : "Withdraw"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Block confirmation */}

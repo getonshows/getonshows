@@ -145,6 +145,70 @@ const FORMAT_LABELS: Record<string, string> = {
   both: "Remote or in-person recording",
 };
 
+/**
+ * Evidence-based reasons a candidate matches the viewer, best first, max
+ * three. Each reason traces to a stored field that fed the score, so a
+ * high score always has a concrete explanation (never just "same time zone").
+ * Extracted so the one-sheet can show the same reasons as the match card.
+ */
+export function buildReasons(args: {
+  viewerProfile: ProfileRow;
+  viewerTopics: TopicRow[];
+  candidate: Candidate;
+}): string[] {
+  const { viewerProfile, viewerTopics, candidate: c } = args;
+  const viewerTopicIds = new Set(viewerTopics.map((t) => t.id));
+  const viewerTopicLabels = new Map(viewerTopics.map((t) => [t.id, t.label]));
+  const viewerEmb = parseEmbedding(viewerProfile.embedding);
+  const candEmb = parseEmbedding(c.profile.embedding);
+
+  const sharedIds = c.topics
+    .map((t) => t.id)
+    .filter((id) => viewerTopicIds.has(id));
+  const sharedLabels = sharedIds
+    .map((id) => viewerTopicLabels.get(id) ?? "")
+    .filter(Boolean);
+
+  let usedEmbedding = false;
+  let cos = 0;
+  if (viewerEmb && candEmb) {
+    cos = cosine(viewerEmb, candEmb);
+    usedEmbedding = true;
+  }
+
+  const reasons: string[] = [];
+  if (sharedLabels.length > 0) {
+    const shown = sharedLabels.slice(0, 2).join(" & ");
+    const extra =
+      sharedLabels.length > 2 ? ` +${sharedLabels.length - 2} more` : "";
+    reasons.push(`You both cover ${shown}${extra}`);
+  } else if (usedEmbedding && cos >= 0.72) {
+    // No shared tags, but the embedding similarity drove the score: name
+    // the candidate's actual topics so the reason is verifiable.
+    const theirTopics = c.topics
+      .slice(0, 2)
+      .map((t) => t.label)
+      .filter(Boolean);
+    reasons.push(
+      theirTopics.length > 0
+        ? `Close to your focus: they cover ${theirTopics.join(" & ")}`
+        : "Closely related focus areas"
+    );
+  }
+  const fmt = c.hostModule?.format;
+  if (fmt && (fmt === "remote" || fmt === "both")) {
+    reasons.push(FORMAT_LABELS[fmt]);
+  }
+  if (viewerProfile.timezone && c.profile.timezone) {
+    const tzReason = formatHourDiff(
+      viewerProfile.timezone,
+      c.profile.timezone
+    );
+    if (tzReason) reasons.push(tzReason);
+  }
+  return reasons.slice(0, 3);
+}
+
 export function rankCandidates(args: {
   viewerProfile: ProfileRow;
   viewerTopics: TopicRow[];
@@ -153,7 +217,6 @@ export function rankCandidates(args: {
 }): RankedCandidate[] {
   const { viewerProfile, viewerTopics, candidates, limit = 20 } = args;
   const viewerTopicIds = new Set(viewerTopics.map((t) => t.id));
-  const viewerTopicLabels = new Map(viewerTopics.map((t) => [t.id, t.label]));
   const viewerEmb = parseEmbedding(viewerProfile.embedding);
 
   const ranked: RankedCandidate[] = [];
@@ -165,9 +228,6 @@ export function rankCandidates(args: {
     const sharedIds = c.topics
       .map((t) => t.id)
       .filter((id) => viewerTopicIds.has(id));
-    const sharedLabels = sharedIds
-      .map((id) => viewerTopicLabels.get(id) ?? "")
-      .filter(Boolean);
 
     // Topic similarity: embedding cosine when both sides have one,
     // otherwise shared-tag overlap (cold-start fallback).
@@ -195,44 +255,12 @@ export function rankCandidates(args: {
       100 * (0.5 * topicSim + 0.2 * fFit + 0.15 * tFit + 0.1 * rFit + 0.05 * qFit)
     );
 
-    // Reasons: evidence-based, best first, max three. Each reason traces to
-    // a stored field that fed the score, so a high score always has a
-    // concrete explanation (never just "same time zone").
-    const reasons: string[] = [];
-    if (sharedLabels.length > 0) {
-      const shown = sharedLabels.slice(0, 2).join(" & ");
-      const extra =
-        sharedLabels.length > 2 ? ` +${sharedLabels.length - 2} more` : "";
-      reasons.push(`You both cover ${shown}${extra}`);
-    } else if (usedEmbedding && cos >= 0.72) {
-      // No shared tags, but the embedding similarity drove the score: name
-      // the candidate's actual topics so the reason is verifiable.
-      const theirTopics = c.topics
-        .slice(0, 2)
-        .map((t) => t.label)
-        .filter(Boolean);
-      reasons.push(
-        theirTopics.length > 0
-          ? `Close to your focus: they cover ${theirTopics.join(" & ")}`
-          : "Closely related focus areas"
-      );
-    }
-    const fmt = c.hostModule?.format;
-    if (fmt && (fmt === "remote" || fmt === "both")) {
-      reasons.push(FORMAT_LABELS[fmt]);
-    }
-    if (viewerProfile.timezone && c.profile.timezone) {
-      const tzReason = formatHourDiff(
-        viewerProfile.timezone,
-        c.profile.timezone
-      );
-      if (tzReason) reasons.push(tzReason);
-    }
+    const reasons = buildReasons({ viewerProfile, viewerTopics, candidate: c });
 
     ranked.push({
       ...c,
       score,
-      reasons: reasons.slice(0, 3),
+      reasons,
       usedEmbedding,
     });
   }

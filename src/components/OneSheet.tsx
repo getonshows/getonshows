@@ -57,6 +57,7 @@ export default function OneSheet({
   guestModule,
   topics,
   role,
+  matchReasons,
 }: {
   profile: ProfileRow;
   hostModule: HostModuleRow | null;
@@ -65,6 +66,8 @@ export default function OneSheet({
   /** Canonical users.role. When provided, the badge and visible sections
    * follow it; otherwise they are derived from the complete modules. */
   role?: Role | null;
+  /** Why this profile matches the viewer (discovery only). */
+  matchReasons?: string[];
 }) {
   const formatLabels: Record<string, string> = {
     remote: "Remote",
@@ -120,6 +123,22 @@ export default function OneSheet({
           <p className="mt-4 leading-relaxed text-navy-100">{profile.bio}</p>
         )}
       </header>
+
+      {matchReasons && matchReasons.length > 0 && (
+        <Section title="Why this match">
+          <ul className="space-y-1.5">
+            {matchReasons.map((r, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                <span
+                  aria-hidden="true"
+                  className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                />
+                {r}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       {topics.length > 0 && (
         <Section title="Topics">

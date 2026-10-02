@@ -138,6 +138,9 @@ export interface ConversationRow {
   booking_claimed_by: string | null;
   booking_confirmed: boolean;
   agreed_at: string | null;
+  recording_confirmed_by: string[];
+  recording_declined_by: string[];
+  completed_at: string | null;
   state_changed_at: string | null;
   state_changed_by_profile_id: string | null;
   created_at: string;
@@ -215,6 +218,7 @@ export interface Collaboration {
   photo_url: string | null;
   my_role: "host" | "guest";
   booked_at: string | null;
+  completed_at: string | null;
 }
 
 export type BookingRequestStatus = "pending" | "accepted" | "declined" | "cancelled";

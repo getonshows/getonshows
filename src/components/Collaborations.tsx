@@ -9,6 +9,15 @@ function formatDate(iso: string | null): string | null {
   return d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
 }
 
+/** What the booking row is allowed to claim: a mutually-confirmed recording,
+ * a confirmed future booking, or a unilateral claim. */
+function statusChip(c: Collaboration): { label: string; classes: string } {
+  if (c.completed_at) {
+    return { label: "Recorded", classes: "bg-teal-100 text-teal-800" };
+  }
+  return { label: "Claimed", classes: "bg-amber-100 text-amber-800" };
+}
+
 /** Booked collaborations, with links to each collaborator's profile.
  * Listed from conversation state "booked": that means a booking was claimed
  * or confirmed, not that the recording happened. Copy must not claim a
@@ -33,6 +42,7 @@ export default function Collaborations({
       <ul className="mt-3 space-y-2">
         {items.map((c) => {
           const date = formatDate(c.booked_at);
+          const chip = statusChip(c);
           return (
             <li key={c.profile_id}>
               <Link
@@ -55,7 +65,7 @@ export default function Collaborations({
                     {(c.display_name ?? "?").slice(0, 1).toUpperCase()}
                   </div>
                 )}
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-navy-900">
                     {c.display_name ?? "Member"}
                   </p>
@@ -68,6 +78,11 @@ export default function Collaborations({
                     {date ? ` · ${date}` : ""}
                   </p>
                 </div>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${chip.classes}`}
+                >
+                  {chip.label}
+                </span>
               </Link>
             </li>
           );

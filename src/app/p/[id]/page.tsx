@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import OneSheet from "@/components/OneSheet";
@@ -13,6 +14,60 @@ import type {
   Role,
   TopicRow,
 } from "@/lib/types";
+
+const SITE_URL = "https://www.getonshows.com";
+
+/**
+ * Rich unfurls for shared profiles: name, headline, and photo travel with
+ * the link into iMessage, Facebook, and anywhere else it gets pasted.
+ * Unpublished profiles fall back to the generic site title.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("display_name,title,bio,photo_url")
+    .eq("id", id)
+    .eq("state", "published")
+    .maybeSingle();
+  const p = (data ?? null) as {
+    display_name: string | null;
+    title: string | null;
+    bio: string | null;
+    photo_url: string | null;
+  } | null;
+  if (!p) return { title: "GetOnShows" };
+  const name = p.display_name ?? "Member";
+  const title = `${name} | GetOnShows`;
+  const description = (
+    p.title ??
+    p.bio ??
+    "Find this member on GetOnShows, the podcast guest and host matchmaker."
+  ).slice(0, 160);
+  const images = p.photo_url ? [{ url: p.photo_url }] : [];
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/p/${id}`,
+      type: "profile",
+      images,
+    },
+    twitter: {
+      card: images.length > 0 ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: images.map((i) => i.url),
+    },
+  };
+}
 
 /**
  * Public profile page. This is the share/QR destination: anyone with the

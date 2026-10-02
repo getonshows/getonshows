@@ -866,3 +866,30 @@ export async function recordInviteShare(
     code,
   });
 }
+
+/** Read the caller's email-notification preference (defaults on). */
+export async function getEmailNotificationPref(): Promise<boolean> {
+  const { supabase, user } = await authed();
+  const { data } = await supabase
+    .from("users")
+    .select("email_notifications")
+    .eq("id", user.id)
+    .maybeSingle();
+  return (data as { email_notifications?: boolean | null } | null)?.email_notifications ?? true;
+}
+
+/** Opt in or out of transactional emails (pitches, replies, booking activity). */
+export async function setEmailNotifications(on: boolean): Promise<void> {
+  const { supabase, user } = await authed();
+  await supabase
+    .from("users")
+    .update({ email_notifications: on })
+    .eq("id", user.id);
+}
+
+/** Funnel instrumentation: record that the caller viewed a builder step.
+ * Fire-and-forget from the client; analytics must never break the builder. */
+export async function trackBuilderStep(step: string): Promise<void> {
+  const { supabase, user } = await authed();
+  await logServerEvent(supabase, user.id, "builder_step", { step });
+}

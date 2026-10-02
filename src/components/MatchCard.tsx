@@ -9,6 +9,21 @@ const FORMAT_LABELS: Record<string, string> = {
   both: "Remote or in person",
 };
 
+/**
+ * The score is a weighted heuristic, not a measurement: present it as a
+ * band ("Strong match") with the number as supporting detail, never as a
+ * precise claim.
+ */
+function bandFor(score: number): { label: string; classes: string } {
+  if (score >= 85)
+    return { label: "Strong match", classes: "bg-brand-light text-brand-dark" };
+  if (score >= 70)
+    return { label: "Good match", classes: "bg-teal-100 text-teal-800" };
+  if (score >= 55)
+    return { label: "Possible match", classes: "bg-sky/15 text-navy" };
+  return { label: "New angle", classes: "bg-slate-100 text-slate-600" };
+}
+
 const MEDIUM_LABELS: Record<string, string> = {
   audio: "Audio",
   video: "Video",
@@ -28,6 +43,7 @@ export default function MatchCard({
   asRole: "host" | "guest";
 }) {
   const p = match.profile;
+  const band = bandFor(match.score);
   const headline =
     match.hostModule?.show_name ??
     match.guestModule?.expertise ??
@@ -85,12 +101,13 @@ export default function MatchCard({
           )}
         </div>
         <div
-          className="shrink-0 rounded-xl bg-brand-light px-3 py-2 text-center"
-          aria-label={`${match.score} percent match`}
+          className={`shrink-0 rounded-xl px-3 py-2 text-center ${band.classes}`}
+          aria-label={`${band.label}, score ${match.score} out of 100`}
+          title={`Match score ${match.score}/100`}
         >
-          <p className="text-xl font-bold text-brand-dark">{match.score}</p>
-          <p className="text-[11px] font-semibold uppercase text-brand-dark">
-            match
+          <p className="whitespace-nowrap text-sm font-bold">{band.label}</p>
+          <p className="text-[11px] font-semibold uppercase opacity-80">
+            {match.score}
           </p>
         </div>
       </div>

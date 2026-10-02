@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { saveDraft, publishProfile } from "@/lib/actions";
+import { saveDraft, publishProfile, trackBuilderStep } from "@/lib/actions";
 import { validatePublish } from "@/lib/publish-validation";
 import TopicPicker from "@/components/TopicPicker";
 import PhotoUpload from "@/components/PhotoUpload";
@@ -330,6 +330,11 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft]);
+
+  // Funnel: record each builder step viewed (distinct users per step).
+  useEffect(() => {
+    void trackBuilderStep(step);
+  }, [step]);
 
   async function goTo(index: number) {
     setPublishMissing([]);

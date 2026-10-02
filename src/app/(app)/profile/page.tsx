@@ -5,6 +5,7 @@ import {
   loadProfileStats,
   loadCollaborations,
   getInviteInfo,
+  getEmailNotificationPref,
   pauseProfile,
   resumeProfile,
   requestDeletion,
@@ -18,6 +19,7 @@ import Collaborations from "@/components/Collaborations";
 import RoleBadge from "@/components/RoleBadge";
 import ShareProfile from "@/components/ShareProfile";
 import InviteCard from "@/components/InviteCard";
+import NotificationSettings from "@/components/NotificationSettings";
 import UpcomingBookings from "@/components/UpcomingBookings";
 
 function StateCard({
@@ -146,6 +148,7 @@ export default async function ProfileHomePage() {
   const collaborations = await loadCollaborations();
   const inviteInfo = await getInviteInfo();
   const upcomingBookings = await getUpcomingBookings();
+  const emailNotifications = await getEmailNotificationPref();
 
   // Task 0 edge: after switching to a role whose module is missing or
   // incomplete, guide to the builder (link, never an auto-redirect). A module
@@ -297,6 +300,8 @@ export default async function ProfileHomePage() {
       )}
 
       <InviteCard initial={inviteInfo} />
+
+      <NotificationSettings initial={emailNotifications} />
 
       {profile ? (
         <StateCard
