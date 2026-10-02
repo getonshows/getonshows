@@ -511,6 +511,15 @@ const withdrawPolicy = await db.query(`
 `);
 check('conversations has the pitch-withdrawal delete policy', withdrawPolicy.rows.length === 1);
 
+const collabFn = await db.query(`
+  select prosrc from pg_proc
+  where proname = 'profile_collaborations'
+`);
+check(
+  'profile_collaborations() returns agreed_at for the Booked badge',
+  collabFn.rows.length === 1 && collabFn.rows[0].prosrc.includes('agreed_at')
+);
+
 await db.exec(`reset role;`);
 
 console.log(failures === 0 ? '\nAll migration checks passed.' : `\n${failures} check(s) failed.`);

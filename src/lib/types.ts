@@ -218,6 +218,8 @@ export interface Collaboration {
   photo_url: string | null;
   my_role: "host" | "guest";
   booked_at: string | null;
+  /** Mutually-agreed recording time (null for unilateral booking-link claims). */
+  agreed_at: string | null;
   completed_at: string | null;
 }
 
