@@ -130,6 +130,8 @@ export default async function PublicProfilePage({
 
   const s = (stats ?? null) as {
     bookings: number;
+    bookings_upcoming: number;
+    bookings_completed: number;
     pitches: number;
     published: boolean;
   } | null;
@@ -190,10 +192,18 @@ export default async function PublicProfilePage({
                 </li>
               ))}
             </ul>
-            {(s?.bookings ?? 0) > 0 && (
+            {(s?.bookings_completed ?? 0) > 0 && (
               <p className="mt-3 text-sm text-slate-600">
-                {s?.bookings} {s?.bookings === 1 ? "booking" : "bookings"}{" "}
+                {s?.bookings_completed}{" "}
+                {s?.bookings_completed === 1 ? "booking" : "bookings"}{" "}
                 completed on GetOnShows.
+              </p>
+            )}
+            {(s?.bookings_upcoming ?? 0) > 0 && (
+              <p className="mt-3 text-sm text-slate-600">
+                {s?.bookings_upcoming}{" "}
+                {s?.bookings_upcoming === 1 ? "upcoming booking" : "upcoming bookings"}{" "}
+                on GetOnShows.
               </p>
             )}
           </section>

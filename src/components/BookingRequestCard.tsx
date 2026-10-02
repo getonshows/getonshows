@@ -86,9 +86,10 @@ export default function BookingRequestCard({
                 type="button"
                 disabled={acting}
                 onClick={() => act("accept", s)}
+                aria-label={`Accept ${label(s)}`}
                 className="tap-target rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
               >
-                Accept {label(s).split(" · ")[1] ?? ""}
+                Accept {label(s)}
               </button>
             ))}
             <button

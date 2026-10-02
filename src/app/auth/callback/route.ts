@@ -10,9 +10,9 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/profile";
+  const cookieStore = await cookies();
 
   if (code) {
-    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -107,6 +107,15 @@ export async function GET(request: Request) {
     }
   }
 
-  // No code, or the exchange failed (expired/reused link): recoverable.
-  return NextResponse.redirect(`${origin}/login?error=link`);
+  // No code, or the exchange failed (expired/reused link, or the link was
+  // opened in a different browser than the one that requested it so the PKCE
+  // verifier is missing): recoverable. Keep the role intent so the login
+  // page can still show the right heading and error explanation.
+  const errParams = new URLSearchParams({ error: "link" });
+  const savedIntent = cookieStore.get("gos_intent")?.value;
+  if (savedIntent === "host" || savedIntent === "guest") {
+    errParams.set("intent", savedIntent);
+  }
+  if (next !== "/profile") errParams.set("next", next);
+  return NextResponse.redirect(`${origin}/login?${errParams.toString()}`);
 }

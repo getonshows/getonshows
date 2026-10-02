@@ -516,8 +516,19 @@ const collabFn = await db.query(`
   where proname = 'profile_collaborations'
 `);
 check(
-  'profile_collaborations() returns agreed_at for the Booked badge',
+  'profile_collaborations() returns agreed_at for the Confirmed badge',
   collabFn.rows.length === 1 && collabFn.rows[0].prosrc.includes('agreed_at')
+);
+
+const statsFn = await db.query(`
+  select prosrc from pg_proc
+  where proname = 'profile_public_stats'
+`);
+check(
+  'profile_public_stats() splits bookings_upcoming / bookings_completed',
+  statsFn.rows.length === 1 &&
+    statsFn.rows[0].prosrc.includes('bookings_upcoming') &&
+    statsFn.rows[0].prosrc.includes('bookings_completed')
 );
 
 await db.exec(`reset role;`);

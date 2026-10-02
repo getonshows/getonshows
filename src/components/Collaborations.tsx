@@ -16,7 +16,7 @@ function statusChip(c: Collaboration): { label: string; classes: string } {
     return { label: "Recorded", classes: "bg-teal-100 text-teal-800" };
   }
   if (c.agreed_at) {
-    return { label: "Booked", classes: "bg-sky-100 text-sky-800" };
+    return { label: "Confirmed", classes: "bg-sky-100 text-sky-800" };
   }
   return { label: "Claimed", classes: "bg-amber-100 text-amber-800" };
 }

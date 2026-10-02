@@ -517,7 +517,9 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
             </a>
           ) : (
             <p className="mt-1 text-xs text-slate-500">
-              They haven't added a booking link — arrange the time in chat.
+              {conversation.agreed_at
+                ? "They haven't added a booking link — arrange the meeting details in chat."
+                : "They haven't added a booking link — arrange the time in chat."}
             </p>
           )}
           <RecordingConfirm conversation={conversation} myProfileId={myProfileId} />

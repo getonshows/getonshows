@@ -15,7 +15,14 @@ function rememberIntent(intent: string | null) {
   }
 }
 
-export default function LoginForm({ intent }: { intent: string | null }) {
+export default function LoginForm({
+  intent,
+  linkError = false,
+}: {
+  intent: string | null;
+  /** True when the auth callback bounced back because the link failed. */
+  linkError?: boolean;
+}) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
@@ -309,6 +316,21 @@ export default function LoginForm({ intent }: { intent: string | null }) {
               ? "Create your profile and get discovered by the right hosts."
               : "Create your profile and find your next great conversation."}
         </p>
+
+        {linkError && (
+          <div
+            role="alert"
+            className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4"
+          >
+            <p className="text-sm font-semibold text-amber-900">
+              That sign-in link didn&apos;t work.
+            </p>
+            <p className="mt-1 text-sm text-amber-800">
+              Links expire quickly and work only once. Enter your email below
+              for a fresh link, or continue with Google instead.
+            </p>
+          </div>
+        )}
 
         <button
           type="button"
