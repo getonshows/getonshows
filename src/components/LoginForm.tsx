@@ -175,6 +175,26 @@ export default function LoginForm({
     }
   }
 
+  async function signInWithFacebook() {
+    rememberIntent(intent);
+    const supabase = createClient();
+    setStatus("sending");
+    setMessage("");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "facebook",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      setStatus("error");
+      setErrorKind("google");
+      setMessage(
+        "Facebook sign-in didn't start. Check your connection and try again."
+      );
+    }
+  }
+
   /** Mirror of /auth/callback routing + funnel bookkeeping, for password auth. */
   async function routeAfterPasswordAuth() {
     const supabase = createClient();
@@ -346,6 +366,22 @@ export default function LoginForm({
         <p className="mt-2 text-center text-xs text-slate-500">
           One tap, no waiting on an email.
         </p>
+
+        {process.env.NEXT_PUBLIC_FACEBOOK_LOGIN_ENABLED === "true" && (
+          <>
+            <button
+              type="button"
+              onClick={signInWithFacebook}
+              disabled={status === "sending"}
+              className="tap-target mt-3 w-full rounded-xl border-2 border-[#1877F2] bg-white px-6 py-3 font-semibold text-[#1877F2] shadow-sm transition hover:bg-blue-50 disabled:opacity-60"
+            >
+              Continue with Facebook
+            </button>
+            <p className="mt-2 text-center text-xs text-slate-500">
+              One tap with your Facebook account.
+            </p>
+          </>
+        )}
 
         {!showPassword && (
           <>

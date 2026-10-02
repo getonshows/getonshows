@@ -640,6 +640,11 @@ export default async function LandingPage({
 
       <footer className="mx-auto w-full max-w-6xl px-6 pb-10 text-center text-sm text-white/35">
         <p>Built first for independent podcasters, experts, and creators.</p>
+        <p className="mt-2">
+          <Link href="/privacy" className="underline hover:text-white/60">
+            Privacy Policy
+          </Link>
+        </p>
       </footer>
     </div>
   );
