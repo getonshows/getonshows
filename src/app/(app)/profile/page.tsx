@@ -78,14 +78,8 @@ function StateCard({
           It appears in discovery. Pause it any time to hide it without losing
           your work.
         </p>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <Link
-            href="/profile/view"
-            className="tap-target inline-flex flex-1 items-center justify-center rounded-xl bg-navy-800 px-6 font-semibold text-white hover:bg-navy-900"
-          >
-            View one-sheet
-          </Link>
-          <form action={pauseProfile} className="flex-1">
+        <div className="mt-4">
+          <form action={pauseProfile}>
             <button
               type="submit"
               className="tap-target w-full rounded-xl border border-slate-300 bg-white px-6 font-semibold text-navy-900 hover:bg-slate-50"
@@ -327,17 +321,6 @@ export default async function ProfileHomePage() {
       <section className="rounded-2xl bg-white p-5 ring-1 ring-slate-200">
         <h2 className="text-lg font-semibold text-navy-900">Account</h2>
         <p className="mt-1 text-sm text-slate-600">{userRow.email}</p>
-        <a
-          href="/profile/export"
-          download
-          className="tap-target mt-3 inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-6 font-semibold text-navy-900 hover:bg-slate-50"
-        >
-          Download my data
-        </a>
-        <p className="mt-2 text-xs text-slate-500">
-          A JSON file with your account, profiles, conversations, pitches,
-          blocks, and quota state.
-        </p>
         {isAdmin && (
           <Link
             href="/admin/funnel"

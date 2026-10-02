@@ -64,7 +64,7 @@ export default function HeroMatch() {
     <div
       ref={ref}
       className="mx-auto mt-12 max-w-3xl"
-      aria-label="Illustrative match example"
+      aria-label="Match example"
     >
       {/* Cards + waveform connector */}
       <div
@@ -156,7 +156,6 @@ export default function HeroMatch() {
           “Will AI replace knowledge workers, or make them dramatically more
           powerful?”
         </p>
-        <p className="mt-3 text-xs text-white/30">Illustrative example</p>
       </div>
     </div>
   );

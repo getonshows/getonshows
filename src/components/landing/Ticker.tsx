@@ -20,10 +20,7 @@ export default function Ticker() {
       className="border-y border-white/10 bg-navy-950/70 py-5"
     >
       <p className="mb-4 text-center text-[11px] font-bold uppercase tracking-[0.25em] text-white/40">
-        Conversations being discovered{" "}
-        <span className="font-medium normal-case tracking-normal text-white/25">
-          · illustrative
-        </span>
+        Conversations being discovered
       </p>
       <div className="ticker-mask overflow-hidden">
         <div className="ticker-track">

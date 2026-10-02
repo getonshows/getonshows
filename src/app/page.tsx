@@ -225,16 +225,7 @@ export default async function LandingPage() {
           <div className="absolute -right-24 top-72 h-64 w-64 rounded-full bg-brand/10 blur-3xl" />
         </div>
         <div className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-16 text-center sm:pt-24">
-          <div className="flex justify-center">
-            <Image
-              src="/logo-mark.png"
-              alt="GetOnShows"
-              width={220}
-              height={146}
-              priority
-            />
-          </div>
-          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-tight sm:text-6xl">
+          <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight sm:text-6xl">
             Find podcasts{" "}
             <span className="bg-gradient-to-r from-[#FFB59E] via-[#FF7A59] to-brand bg-clip-text text-transparent">
               worth appearing on.
@@ -370,9 +361,6 @@ export default async function LandingPage() {
                     </span>
                   </span>
                 </Link>
-                <p className="mt-3 text-xs text-white/30">
-                  Illustrative example
-                </p>
               </div>
             </div>
           </Reveal>
@@ -436,7 +424,6 @@ export default async function LandingPage() {
                 <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-brand">
                   Your brief
                 </p>
-                <p className="text-xs text-white/30">Illustrative example</p>
               </div>
               <p className="mt-3 text-lg italic leading-relaxed text-white/85">
                 “I&apos;m looking for founders and researchers with contrarian
@@ -545,9 +532,6 @@ export default async function LandingPage() {
           <Reveal delay={150} className="mt-10">
             <ProfileGrid profiles={EXAMPLE_PROFILES} />
           </Reveal>
-          <p className="mt-6 text-center text-xs text-white/30">
-            Illustrative examples
-          </p>
         </section>
 
         {/* Trust */}
