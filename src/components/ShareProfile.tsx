@@ -48,10 +48,19 @@ export default async function ShareProfile({
             height={132}
             className="rounded-xl ring-1 ring-slate-200"
           />
-          <p className="text-sm text-slate-600">
-            Scan to open {displayName}&rsquo;s profile. Works on posters,
-            slides, and video end-screens.
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-600">
+              Scan to open {displayName}&rsquo;s profile. Works on posters,
+              slides, and video end-screens.
+            </p>
+            <a
+              href={qr}
+              download={`${displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-getonshows-qr.png`}
+              className="tap-target inline-flex items-center gap-1.5 rounded-xl bg-navy-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-900"
+            >
+              ⬇ Download QR image
+            </a>
+          </div>
         </div>
       )}
     </section>
