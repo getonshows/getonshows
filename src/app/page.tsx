@@ -182,12 +182,25 @@ const FAQS = [
   },
 ];
 
-export default async function LandingPage() {
-  const supabase = createClient();
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string }>;
+}) {
+  const { ref } = await searchParams;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user) redirect("/profile");
+
+  // Invite banner: resolve ?ref=CODE to the inviter's name.
+  let inviterName: string | null = null;
+  const cleanRef = (ref ?? "").trim().slice(0, 80);
+  if (cleanRef) {
+    const { data } = await supabase.rpc("resolve_invite", { code: cleanRef });
+    inviterName = (data as string | null) ?? null;
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-navy-900 text-white">
@@ -216,6 +229,14 @@ export default async function LandingPage() {
             Log in
           </Link>
         </nav>
+        {inviterName && (
+          <p
+            role="status"
+            className="relative z-10 mx-auto mt-2 w-fit max-w-6xl rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white ring-1 ring-white/25"
+          >
+            ✉️ {inviterName} invited you to GetOnShows
+          </p>
+        )}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"

@@ -4,6 +4,7 @@ import {
   loadProfileHome,
   loadProfileStats,
   loadCollaborations,
+  getInviteInfo,
   pauseProfile,
   resumeProfile,
   requestDeletion,
@@ -15,6 +16,7 @@ import BadgeList from "@/components/BadgeList";
 import Collaborations from "@/components/Collaborations";
 import RoleBadge from "@/components/RoleBadge";
 import ShareProfile from "@/components/ShareProfile";
+import InviteCard from "@/components/InviteCard";
 
 function StateCard({
   state,
@@ -120,6 +122,7 @@ export default async function ProfileHomePage() {
     await loadProfileHome();
   const stats = await loadProfileStats();
   const collaborations = await loadCollaborations();
+  const inviteInfo = await getInviteInfo();
 
   // Task 0 edge: after switching to a role whose module was never started,
   // guide to the builder (link, never an auto-redirect).
@@ -257,6 +260,8 @@ export default async function ProfileHomePage() {
           displayName={profile.display_name ?? "Member"}
         />
       )}
+
+      <InviteCard initial={inviteInfo} />
 
       {profile ? (
         <StateCard state={profile.state} completeness={profile.completeness} />

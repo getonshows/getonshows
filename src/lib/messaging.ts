@@ -14,7 +14,7 @@ import type {
   ThreadPreview,
 } from "@/lib/types";
 
-type SupabaseClient = ReturnType<typeof createClient>;
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 export interface ActionResult {
   ok: boolean;
@@ -42,7 +42,7 @@ const INTENT_LABEL: Record<IntentAction, string> = {
 };
 
 async function authed() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -572,12 +572,15 @@ export async function blockUser(targetUserId: string): Promise<ActionResult> {
   const myPid = await myProfileId(supabase, user.id);
   const theirPid = await myProfileId(supabase, targetUserId);
   if (myPid && theirPid) {
-    await supabase
+    const { error: archiveError } = await supabase
       .from("conversations")
       .update({ archived: true })
       .or(
         `and(host_profile_id.eq.${myPid},guest_profile_id.eq.${theirPid}),and(host_profile_id.eq.${theirPid},guest_profile_id.eq.${myPid})`
       );
+    if (archiveError) {
+      return { ok: false, error: "Couldn't archive the conversation. Please try again." };
+    }
   }
   return { ok: true };
 }
@@ -651,9 +654,21 @@ export async function getInboxThreads(): Promise<ThreadPreview[]> {
   }[];
 
   const previews: ThreadPreview[] = [];
+  // Belt and suspenders: threads with a blocked user never surface, even if
+  // the archived flag didn't stick.
+  const { data: blockRows } = await supabase
+    .from("blocks")
+    .select("blocker_user_id,blocked_user_id")
+    .or(`blocker_user_id.eq.${user.id},blocked_user_id.eq.${user.id}`);
+  const blockedUserIds = new Set(
+    ((blockRows ?? []) as { blocker_user_id: string; blocked_user_id: string }[]).map(
+      (b) => (b.blocker_user_id === user.id ? b.blocked_user_id : b.blocker_user_id)
+    )
+  );
   for (const c of conversations) {
     const otherPid = c.host_profile_id === myPid ? c.guest_profile_id : c.host_profile_id;
     const other = await buildParticipant(supabase, otherPid);
+    if (blockedUserIds.has(other.userId)) continue;
     const cMessages = messages.filter((m) => m.conversation_id === c.id);
     const last = cMessages[0] ?? null;
     const watermark = readAt.get(c.id);

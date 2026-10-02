@@ -7,11 +7,12 @@ export const metadata = { title: "Conversation · GetOnShows" };
 export default async function ThreadPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   let thread;
   try {
-    thread = await getThread(params.id);
+    thread = await getThread(id);
   } catch {
     notFound();
   }

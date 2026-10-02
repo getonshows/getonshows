@@ -8,6 +8,8 @@ export interface UserRow {
   email: string;
   role: RoleOrUndecided;
   status: string;
+  invite_code?: string | null;
+  invited_by?: string | null;
 }
 
 export interface ProfileRow {

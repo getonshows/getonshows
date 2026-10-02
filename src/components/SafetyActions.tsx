@@ -23,8 +23,10 @@ export default function SafetyActions({
     setBlocking(true);
     const res = await blockUser(targetUserId);
     if (res.ok) {
-      router.push("/discover");
+      // Refresh first so the inbox cache is invalidated before we navigate
+      // away; otherwise the blocked thread can linger in the router cache.
       router.refresh();
+      router.push("/discover");
     } else {
       setError(res.error ?? "Couldn't block this user.");
       setBlocking(false);

@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/server";
  * (owner-held, documented in docs/RETENTION.md).
  */
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

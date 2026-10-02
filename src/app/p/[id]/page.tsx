@@ -21,14 +21,15 @@ import type {
 export default async function PublicProfilePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const supabase = createClient();
+  const { id } = await params;
+  const supabase = await createClient();
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("state", "published")
     .maybeSingle();
   const p = (profile ?? null) as ProfileRow | null;

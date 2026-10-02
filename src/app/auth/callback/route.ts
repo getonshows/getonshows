@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const next = searchParams.get("next") ?? "/profile";
 
   if (code) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -72,6 +72,21 @@ export async function GET(request: Request) {
               .update({ source: sourceCookie })
               .eq("id", user.id)
               .is("source", null);
+          }
+          // Invite attribution: a gos_source value matching someone's
+          // invite_code credits them as the inviter. Once only, never self.
+          const { data: inviter } = await supabase
+            .from("users")
+            .select("id")
+            .eq("invite_code", sourceCookie)
+            .maybeSingle();
+          const inviterId = (inviter as { id: string } | null)?.id ?? null;
+          if (inviterId && inviterId !== user.id) {
+            await supabase
+              .from("users")
+              .update({ invited_by: inviterId })
+              .eq("id", user.id)
+              .is("invited_by", null);
           }
         }
         const { count } = await supabase

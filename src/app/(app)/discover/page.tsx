@@ -49,9 +49,10 @@ function EmptyState({
 export default async function DiscoverPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  const supabase = createClient();
+  const sp = await searchParams;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -70,7 +71,7 @@ export default async function DiscoverPage({
   // Dual-role users toggle which side of the marketplace they browse.
   const viewing: "guests" | "shows" =
     role === "dual"
-      ? searchParams.view === "shows"
+      ? sp.view === "shows"
         ? "shows"
         : "guests"
       : role === "host"
@@ -149,13 +150,13 @@ export default async function DiscoverPage({
     .filter((t): t is TopicRow => !!t);
 
   // Filters from the URL.
-  const q = (searchParams.q ?? "").trim().toLowerCase();
+  const q = (sp.q ?? "").trim().toLowerCase();
   const filterTopicIds = new Set(
-    (searchParams.topics ?? "").split(",").filter(Boolean)
+    (sp.topics ?? "").split(",").filter(Boolean)
   );
-  const filterMedium = searchParams.medium ?? "";
-  const filterSession = searchParams.session ?? "";
-  const filterLoc = (searchParams.loc ?? "").trim().toLowerCase();
+  const filterMedium = sp.medium ?? "";
+  const filterSession = sp.session ?? "";
+  const filterLoc = (sp.loc ?? "").trim().toLowerCase();
 
   const candidates: Candidate[] = [];
   for (const r of allRows) {

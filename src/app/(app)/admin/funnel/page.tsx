@@ -39,7 +39,7 @@ function isAdminEmail(email: string | undefined): boolean {
  * Non-allowlisted users get a 404. Every view is logged to the event trail.
  */
 export default async function FunnelPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

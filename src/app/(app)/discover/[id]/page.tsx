@@ -21,10 +21,11 @@ export default async function DiscoverProfilePage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { from?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
-  const supabase = createClient();
+  const [{ id }, { from }] = await Promise.all([params, searchParams]);
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -33,7 +34,7 @@ export default async function DiscoverProfilePage({
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("state", "published")
     .maybeSingle();
   const p = (profile ?? null) as ProfileRow | null;
@@ -51,7 +52,7 @@ export default async function DiscoverProfilePage({
 
   // Funnel: one-sheet opened from Discover (never for self-views).
   // Fire-and-forget: analytics must not break the page.
-  if (searchParams.from === "discover" && p.user_id !== user.id) {
+  if (from === "discover" && p.user_id !== user.id) {
     void logServerEvent(supabase, user.id, "match_opened", {
       target_profile_id: p.id,
     });

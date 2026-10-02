@@ -10,7 +10,7 @@ import type {
 } from "@/lib/types";
 
 export default async function ProfileViewPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -22,7 +22,7 @@ import type {
 
 const MAX_CUSTOM_TOPICS = 3;
 
-type SupabaseClient = ReturnType<typeof createClient>;
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 function slugify(label: string): string {
   return label
@@ -34,7 +34,7 @@ function slugify(label: string): string {
 }
 
 async function authed() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -748,4 +748,113 @@ export async function requestDeletion(): Promise<void> {
     /* already signed out by the purge */
   }
   redirect("/");
+}
+
+/* ------------------------------------------------------------------ */
+/* Invites                                                             */
+/* ------------------------------------------------------------------ */
+
+const SITE_URL = "https://www.getonshows.com";
+const INVITE_DAILY_LIMIT = 10;
+
+type InviteResult = { ok: true } | { ok: false; error: string };
+
+async function myInviteCode(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string> {
+  const { data } = await supabase
+    .from("users")
+    .select("invite_code")
+    .eq("id", userId)
+    .single();
+  let code = (data as { invite_code: string | null } | null)?.invite_code ?? null;
+  if (!code) {
+    code = Math.random().toString(36).slice(2, 10);
+    await supabase.from("users").update({ invite_code: code }).eq("id", userId);
+  }
+  return code;
+}
+
+async function invitesSentToday(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<number> {
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const { count } = await supabase
+    .from("invites")
+    .select("id", { count: "exact", head: true })
+    .eq("inviter_user_id", userId)
+    .gte("created_at", since);
+  return count ?? 0;
+}
+
+/** The signed-in user's invite code, link, and remaining daily quota. */
+export async function getInviteInfo(): Promise<{
+  code: string;
+  link: string;
+  sentToday: number;
+  limit: number;
+}> {
+  const { supabase, user } = await authed();
+  const code = await myInviteCode(supabase, user.id);
+  const sentToday = await invitesSentToday(supabase, user.id);
+  return {
+    code,
+    link: `${SITE_URL}/?ref=${code}`,
+    sentToday,
+    limit: INVITE_DAILY_LIMIT,
+  };
+}
+
+/**
+ * Invite by email: sends a GetOnShows sign-in link to the address via
+ * Supabase's email (magic-link template, customizable in the dashboard).
+ * The link carries ?ref= so the signup is attributed to the inviter.
+ */
+export async function sendInviteEmail(email: string): Promise<InviteResult> {
+  const { supabase, user } = await authed();
+  const clean = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean) || clean.length > 254) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+  if ((await invitesSentToday(supabase, user.id)) >= INVITE_DAILY_LIMIT) {
+    return {
+      ok: false,
+      error: `Invite limit reached (${INVITE_DAILY_LIMIT}/day). Try again tomorrow.`,
+    };
+  }
+  const code = await myInviteCode(supabase, user.id);
+  const { error } = await supabase.auth.signInWithOtp({
+    email: clean,
+    options: {
+      emailRedirectTo: `${SITE_URL}/auth/callback?next=/onboarding&ref=${code}`,
+    },
+  });
+  if (error) {
+    return { ok: false, error: "Couldn't send the invite. Please try again." };
+  }
+  await supabase.from("invites").insert({
+    inviter_user_id: user.id,
+    channel: "email",
+    email: clean,
+    code,
+  });
+  return { ok: true };
+}
+
+/** Record an SMS / link share (the actual send happens in the user's own apps). */
+export async function recordInviteShare(
+  channel: "sms" | "link",
+  phone?: string
+): Promise<void> {
+  const { supabase, user } = await authed();
+  const code = await myInviteCode(supabase, user.id);
+  const cleanPhone = (phone ?? "").replace(/[^\d+]/g, "").slice(0, 20) || null;
+  await supabase.from("invites").insert({
+    inviter_user_id: user.id,
+    channel,
+    phone: cleanPhone,
+    code,
+  });
 }
