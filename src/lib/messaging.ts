@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type {
+  BookingRequestRow,
   ConversationRow,
   ConversationState,
   IntentAction,
@@ -12,6 +13,7 @@ import type {
   ThreadData,
   ThreadParticipant,
   ThreadPreview,
+  UpcomingBooking,
 } from "@/lib/types";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
@@ -726,4 +728,271 @@ export async function getThread(conversationId: string): Promise<ThreadData> {
 export async function getUnreadCount(): Promise<number> {
   const threads = await getInboxThreads();
   return threads.reduce((n, t) => n + t.unreadCount, 0);
+}
+
+/* ------------------------------------------------------------------ */
+/* Native booking                                                      */
+/* ------------------------------------------------------------------ */
+
+/** The other party's booking availability for the slot picker. */
+export async function getBookingAvailability(conversationId: string): Promise<{
+  displayName: string;
+  timezone: string | null;
+  availability: Record<string, string[]> | null;
+} | null> {
+  const { supabase, user } = await authed();
+  const { conversation, otherProfileId } = await assertParticipant(
+    supabase,
+    user.id,
+    conversationId
+  );
+  if (conversation.state !== "interested") return null;
+  const { data: p } = await supabase
+    .from("profiles")
+    .select("display_name,timezone,availability")
+    .eq("id", otherProfileId)
+    .maybeSingle();
+  const row = (p ?? {}) as {
+    display_name?: string | null;
+    timezone?: string | null;
+    availability?: Record<string, string[]> | null;
+  };
+  return {
+    displayName: row.display_name ?? "Member",
+    timezone: row.timezone ?? null,
+    availability: row.availability ?? null,
+  };
+}
+
+function asIsoList(slots: unknown): string[] | null {
+  if (!Array.isArray(slots)) return null;
+  const out: string[] = [];
+  for (const s of slots) {
+    if (typeof s !== "string") return null;
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return null;
+    out.push(d.toISOString());
+  }
+  return out;
+}
+
+/** Propose up to 3 time slots for a booking (conversation must be interested). */
+export async function proposeBooking(
+  conversationId: string,
+  slots: string[]
+): Promise<ActionResult> {
+  const { supabase, user } = await authed();
+  const { conversation, myProfileId } = await assertParticipant(
+    supabase,
+    user.id,
+    conversationId
+  );
+  if (conversation.state !== "interested") {
+    return { ok: false, error: "Booking opens once you're both interested." };
+  }
+  const iso = asIsoList(slots);
+  if (!iso || iso.length < 1 || iso.length > 3) {
+    return { ok: false, error: "Pick 1 to 3 time slots." };
+  }
+  const now = Date.now();
+  if (iso.some((s) => new Date(s).getTime() <= now + 30 * 60000)) {
+    return { ok: false, error: "Slots must be at least 30 minutes out." };
+  }
+  const { data: existing } = await supabase
+    .from("booking_requests")
+    .select("id")
+    .eq("conversation_id", conversationId)
+    .eq("status", "pending")
+    .limit(1);
+  if (existing && existing.length > 0) {
+    return { ok: false, error: "There's already a pending time request." };
+  }
+  const { error } = await supabase.from("booking_requests").insert({
+    conversation_id: conversationId,
+    proposed_by_profile_id: myProfileId,
+    slots: iso,
+  });
+  if (error) return { ok: false, error: "Couldn't send the request. Please try again." };
+
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", myProfileId)
+    .maybeSingle();
+  const myName = (me as { display_name?: string | null } | null)?.display_name ?? "Someone";
+  await supabase.from("messages").insert({
+    conversation_id: conversationId,
+    sender_profile_id: myProfileId,
+    body: `${myName} proposed ${iso.length === 1 ? "a time" : `${iso.length} times`} for the recording.`,
+    kind: "system",
+  });
+  return { ok: true };
+}
+
+/** Accept (with one slot), decline, or cancel a pending booking request. */
+export async function respondBooking(
+  requestId: string,
+  action: "accept" | "decline" | "cancel",
+  slotIso?: string
+): Promise<ActionResult> {
+  const { supabase, user } = await authed();
+  const { data: req } = await supabase
+    .from("booking_requests")
+    .select("*")
+    .eq("id", requestId)
+    .maybeSingle();
+  const r = (req ?? null) as {
+    id: string;
+    conversation_id: string;
+    proposed_by_profile_id: string;
+    slots: string[];
+    status: string;
+  } | null;
+  if (!r) return { ok: false, error: "Request not found." };
+  const { conversation, myProfileId } = await assertParticipant(
+    supabase,
+    user.id,
+    r.conversation_id
+  );
+  if (r.status !== "pending") {
+    return { ok: false, error: "This request was already decided." };
+  }
+  const now = new Date().toISOString();
+
+  if (action === "accept") {
+    if (conversation.state !== "interested") {
+      return { ok: false, error: "Booking opens once you're both interested." };
+    }
+    const iso = slotIso ? asIsoList([slotIso])?.[0] ?? null : null;
+    if (!iso || !r.slots.includes(iso)) {
+      return { ok: false, error: "Pick one of the proposed times." };
+    }
+    if (new Date(iso).getTime() <= Date.now() + 30 * 60000) {
+      return { ok: false, error: "That slot has passed. Ask for new times." };
+    }
+    const { error: reqError } = await supabase
+      .from("booking_requests")
+      .update({ status: "accepted", accepted_slot: iso, decided_at: now })
+      .eq("id", r.id);
+    if (reqError) return { ok: false, error: "Couldn't accept. Please try again." };
+    await supabase
+      .from("conversations")
+      .update({
+        state: "booked",
+        booking_claimed_by: myProfileId,
+        state_changed_at: now,
+        state_changed_by_profile_id: myProfileId,
+      })
+      .eq("id", r.conversation_id);
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", myProfileId)
+      .maybeSingle();
+    const myName = (me as { display_name?: string | null } | null)?.display_name ?? "Someone";
+    await supabase.from("messages").insert({
+      conversation_id: r.conversation_id,
+      sender_profile_id: myProfileId,
+      body: `${myName} confirmed the booking.`,
+      kind: "system",
+    });
+    await logEvent(supabase, user.id, "booking_marked", {});
+    return { ok: true };
+  }
+
+  // decline / cancel
+  const { error } = await supabase
+    .from("booking_requests")
+    .update({
+      status: action === "cancel" ? "cancelled" : "declined",
+      decided_at: now,
+    })
+    .eq("id", r.id);
+  if (error) return { ok: false, error: "Couldn't update the request." };
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", myProfileId)
+    .maybeSingle();
+  const myName = (me as { display_name?: string | null } | null)?.display_name ?? "Someone";
+  await supabase.from("messages").insert({
+    conversation_id: r.conversation_id,
+    sender_profile_id: myProfileId,
+    body:
+      action === "cancel"
+        ? `${myName} withdrew the time request.`
+        : `${myName} declined the proposed times.`,
+    kind: "system",
+  });
+  return { ok: true };
+}
+
+/** All booking requests on a conversation, newest first. */
+export async function getBookingRequests(
+  conversationId: string
+): Promise<
+  (BookingRequestRow & { proposedByMe: boolean; proposerName: string })[]
+> {
+  const { supabase, user } = await authed();
+  const { myProfileId } = await assertParticipant(supabase, user.id, conversationId);
+  const { data } = await supabase
+    .from("booking_requests")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  const rows = ((data ?? []) as BookingRequestRow[]);
+  const out: (BookingRequestRow & { proposedByMe: boolean; proposerName: string })[] = [];
+  for (const r of rows) {
+    const { data: p } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", r.proposed_by_profile_id)
+      .maybeSingle();
+    out.push({
+      ...r,
+      proposedByMe: r.proposed_by_profile_id === myProfileId,
+      proposerName:
+        (p as { display_name?: string | null } | null)?.display_name ?? "Member",
+    });
+  }
+  return out;
+}
+
+/** Upcoming confirmed bookings for the signed-in user (for their profile). */
+export async function getUpcomingBookings(): Promise<UpcomingBooking[]> {
+  const { supabase, user } = await authed();
+  const myPid = await myProfileId(supabase, user.id);
+  if (!myPid) return [];
+  const { data } = await supabase
+    .from("booking_requests")
+    .select("*, conversations!inner(host_profile_id,guest_profile_id)")
+    .eq("status", "accepted")
+    .gte("accepted_slot", new Date().toISOString())
+    .order("accepted_slot", { ascending: true })
+    .limit(20);
+  const rows = ((data ?? []) as (BookingRequestRow & {
+    conversations: { host_profile_id: string; guest_profile_id: string };
+  })[]);
+  const out: UpcomingBooking[] = [];
+  for (const r of rows) {
+    const c = r.conversations;
+    if (c.host_profile_id !== myPid && c.guest_profile_id !== myPid) continue;
+    const otherPid = c.host_profile_id === myPid ? c.guest_profile_id : c.host_profile_id;
+    const { data: p } = await supabase
+      .from("profiles")
+      .select("display_name,photo_url")
+      .eq("id", otherPid)
+      .maybeSingle();
+    const prof = (p ?? {}) as { display_name?: string | null; photo_url?: string | null };
+    out.push({
+      requestId: r.id,
+      acceptedSlot: r.accepted_slot as string,
+      otherProfileId: otherPid,
+      otherName: prof.display_name ?? "Member",
+      otherPhotoUrl: prof.photo_url ?? null,
+      myRole: c.host_profile_id === myPid ? "host" : "guest",
+    });
+  }
+  return out;
 }

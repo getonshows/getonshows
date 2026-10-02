@@ -4,9 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { REPLY_CHAR_LIMIT } from "@/lib/pitch-templates";
-import { blockUser, sendMessage, setIntent } from "@/lib/messaging";
+import { blockUser, getBookingRequests, sendMessage, setIntent } from "@/lib/messaging";
 import type { IntentAction, ThreadData } from "@/lib/types";
+import type { BookingRequestView } from "@/components/BookingRequestCard";
 import ReportDialog from "@/components/ReportDialog";
+import BookingPicker from "@/components/BookingPicker";
+import BookingRequestCard from "@/components/BookingRequestCard";
 
 const STATE_META: Record<string, { label: string; classes: string }> = {
   pitched: { label: "Pitched", classes: "bg-amber-100 text-amber-800" },
@@ -52,16 +55,28 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
   const [blocking, setBlocking] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [bookingRequests, setBookingRequests] = useState<BookingRequestView[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  function refreshBookingRequests() {
+    getBookingRequests(conversation.id)
+      .then(setBookingRequests)
+      .catch(() => {});
+  }
 
   // Poll for new messages every 5s (documented choice over Realtime: simpler,
   // no extra socket, and fine at pilot scale). Pause when tab is hidden.
   useEffect(() => {
+    refreshBookingRequests();
     const id = setInterval(() => {
-      if (!document.hidden) router.refresh();
+      if (document.hidden) return;
+      router.refresh();
+      refreshBookingRequests();
     }, 5000);
     return () => clearInterval(id);
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, conversation.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
@@ -246,6 +261,22 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
         <div ref={bottomRef} />
       </div>
 
+      {/* Booking requests */}
+      {bookingRequests.length > 0 && (
+        <div className="space-y-3 border-t border-slate-100 pt-3">
+          {bookingRequests.map((r) => (
+            <BookingRequestCard
+              key={r.id}
+              request={r}
+              onChanged={() => {
+                refreshBookingRequests();
+                router.refresh();
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Intent bar */}
       {!archived && (canSetIntent || canBook) && (
         <div className="border-t border-slate-100 pt-3">
@@ -289,51 +320,61 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
             </div>
           )}
           {canBook && (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={acting}
-                onClick={() => handleIntent("booked")}
-                className="tap-target flex-1 rounded-xl bg-teal-600 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
-              >
-                {acting
-                  ? "Booking…"
-                  : other.isHost
-                    ? "Book this show"
-                    : "Book this guest"}
-              </button>
-              {confirmPass ? (
-                <>
-                  <button
-                    type="button"
-                    disabled={acting}
-                    onClick={() => handleIntent("passed")}
-                    className="tap-target flex-1 rounded-xl bg-coral py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-                  >
-                    Confirm pass
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmPass(false)}
-                    className="tap-target rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600"
-                  >
-                    Keep
-                  </button>
-                </>
-              ) : (
+            <>
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setConfirmPass(true)}
-                  className="tap-target rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
+                  disabled={acting}
+                  onClick={() => setPickerOpen(true)}
+                  className="tap-target flex-1 rounded-xl bg-teal-600 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50"
                 >
-                  Pass
+                  Pick a time
+                </button>
+                {confirmPass ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={acting}
+                      onClick={() => handleIntent("passed")}
+                      className="tap-target flex-1 rounded-xl bg-coral py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      Confirm pass
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmPass(false)}
+                      className="tap-target rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-600"
+                    >
+                      Keep
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmPass(true)}
+                    className="tap-target rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
+                  >
+                    Pass
+                  </button>
+                )}
+              </div>
+              {other.bookingUrl && (
+                <button
+                  type="button"
+                  disabled={acting}
+                  onClick={() => handleIntent("booked")}
+                  className="tap-target mt-2 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {acting
+                    ? "Booking…"
+                    : "or book instantly via their booking link →"}
                 </button>
               )}
-            </div>
+            </>
           )}
           <p className="mt-1.5 text-center text-xs text-slate-500">
             {canBook
-              ? "Booking claims the spot and opens their booking link to pick a time."
+              ? "Pick a time to propose slots from their availability."
               : "Mark Interested when you're ready — that's what unlocks booking. Passing archives this thread."}
           </p>
         </div>
@@ -452,6 +493,16 @@ export default function ThreadView({ thread }: { thread: ThreadData }) {
           targetName={other.displayName}
           conversationId={conversation.id}
           onClose={() => setReportOpen(false)}
+        />
+      )}
+      {pickerOpen && (
+        <BookingPicker
+          conversationId={conversation.id}
+          onClose={() => setPickerOpen(false)}
+          onSent={() => {
+            refreshBookingRequests();
+            router.refresh();
+          }}
         />
       )}
 

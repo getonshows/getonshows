@@ -10,6 +10,7 @@ import {
   requestDeletion,
   signOut,
 } from "@/lib/actions";
+import { getUpcomingBookings } from "@/lib/messaging";
 import { computeBadges } from "@/lib/badges";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import BadgeList from "@/components/BadgeList";
@@ -17,6 +18,7 @@ import Collaborations from "@/components/Collaborations";
 import RoleBadge from "@/components/RoleBadge";
 import ShareProfile from "@/components/ShareProfile";
 import InviteCard from "@/components/InviteCard";
+import UpcomingBookings from "@/components/UpcomingBookings";
 
 function StateCard({
   state,
@@ -123,6 +125,7 @@ export default async function ProfileHomePage() {
   const stats = await loadProfileStats();
   const collaborations = await loadCollaborations();
   const inviteInfo = await getInviteInfo();
+  const upcomingBookings = await getUpcomingBookings();
 
   // Task 0 edge: after switching to a role whose module was never started,
   // guide to the builder (link, never an auto-redirect).
@@ -253,6 +256,16 @@ export default async function ProfileHomePage() {
       <BadgeList badges={badges} />
 
       <Collaborations items={collaborations} />
+
+      <UpcomingBookings
+        items={upcomingBookings}
+        viewerTimezone={
+          profile?.timezone ??
+          Intl.DateTimeFormat().resolvedOptions().timeZone ??
+          "UTC"
+        }
+        viewerName={profile?.display_name ?? "Member"}
+      />
 
       {profile?.state === "published" && (
         <ShareProfile

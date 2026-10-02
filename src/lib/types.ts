@@ -215,3 +215,25 @@ export interface Collaboration {
   my_role: "host" | "guest";
   booked_at: string | null;
 }
+
+export type BookingRequestStatus = "pending" | "accepted" | "declined" | "cancelled";
+
+export interface BookingRequestRow {
+  id: string;
+  conversation_id: string;
+  proposed_by_profile_id: string;
+  slots: string[];
+  status: BookingRequestStatus;
+  accepted_slot: string | null;
+  created_at: string;
+  decided_at: string | null;
+}
+
+export interface UpcomingBooking {
+  requestId: string;
+  acceptedSlot: string;
+  otherProfileId: string;
+  otherName: string;
+  otherPhotoUrl: string | null;
+  myRole: "host" | "guest";
+}
