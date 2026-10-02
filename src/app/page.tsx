@@ -193,6 +193,29 @@ export default async function LandingPage() {
     <div className="flex min-h-dvh flex-col bg-navy-900 text-white">
       {/* Hero: the match, alive */}
       <header className="relative overflow-hidden">
+        <nav
+          aria-label="Main"
+          className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5"
+        >
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image
+              src="/logo-mark.png"
+              alt="GetOnShows"
+              width={36}
+              height={24}
+              priority
+            />
+            <span className="text-lg font-extrabold tracking-tight text-white">
+              GetOnShows
+            </span>
+          </Link>
+          <Link
+            href="/login"
+            className="tap-target rounded-xl bg-white/10 px-5 py-2.5 text-sm font-bold text-white ring-1 ring-white/25 transition hover:bg-white/20"
+          >
+            Log in
+          </Link>
+        </nav>
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
@@ -204,12 +227,11 @@ export default async function LandingPage() {
         <div className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-16 text-center sm:pt-24">
           <div className="flex justify-center">
             <Image
-              src="/logo.png"
+              src="/logo-mark.png"
               alt="GetOnShows"
-              width={300}
-              height={191}
+              width={220}
+              height={146}
               priority
-              className="rounded-2xl bg-white px-8 py-4 shadow-lg shadow-brand/10"
             />
           </div>
           <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-extrabold leading-tight sm:text-6xl">

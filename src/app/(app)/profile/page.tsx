@@ -1,12 +1,17 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   loadProfileHome,
+  loadProfileStats,
   pauseProfile,
   resumeProfile,
   requestDeletion,
   signOut,
 } from "@/lib/actions";
+import { computeBadges } from "@/lib/badges";
 import RoleSwitcher from "@/components/RoleSwitcher";
+import BadgeList from "@/components/BadgeList";
+import ShareProfile from "@/components/ShareProfile";
 
 function RoleBadge({ role }: { role: string }) {
   const labels: Record<string, string> = {
@@ -117,9 +122,19 @@ function StateCard({
   return null;
 }
 
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl bg-white p-4 text-center ring-1 ring-slate-200">
+      <p className="text-2xl font-extrabold text-navy-900">{value}</p>
+      <p className="mt-0.5 text-xs font-medium text-slate-600">{label}</p>
+    </div>
+  );
+}
+
 export default async function ProfileHomePage() {
   const { userRow, profile, hasHostModule, hasGuestModule, topicCount } =
     await loadProfileHome();
+  const stats = await loadProfileStats();
 
   // Task 0 edge: after switching to a role whose module was never started,
   // guide to the builder (link, never an auto-redirect).
@@ -134,15 +149,80 @@ export default async function ProfileHomePage() {
     .filter(Boolean);
   const isAdmin = adminEmails.includes((userRow.email ?? "").toLowerCase());
 
+  const badges = computeBadges({
+    published: profile?.state === "published",
+    pitchesSent: stats.pitchesSent,
+    bookings: stats.bookings,
+  });
+
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-navy-900">Profile</h1>
-          <p className="mt-1 text-slate-600">{userRow.email}</p>
+      <section
+        aria-labelledby="identity-heading"
+        className="rounded-2xl bg-white p-5 ring-1 ring-slate-200"
+      >
+        <div className="flex items-center gap-4">
+          {profile?.photo_url ? (
+            <Image
+              src={profile.photo_url}
+              alt={`Photo of ${profile.display_name ?? "you"}`}
+              width={72}
+              height={72}
+              className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-slate-200"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-navy-800 text-2xl font-bold text-white"
+            >
+              {(profile?.display_name ?? userRow.email ?? "?")
+                .slice(0, 1)
+                .toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0">
+            <h1
+              id="identity-heading"
+              className="truncate text-2xl font-bold text-navy-900"
+            >
+              {profile?.display_name ?? "Your profile"}
+            </h1>
+            {profile?.title && (
+              <p className="truncate text-sm text-slate-600">{profile.title}</p>
+            )}
+            <div className="mt-1.5">
+              <RoleBadge role={userRow.role} />
+            </div>
+          </div>
         </div>
-        <RoleBadge role={userRow.role} />
-      </header>
+        {profile?.bio && (
+          <p className="mt-3 text-sm leading-relaxed text-slate-700">
+            {profile.bio}
+          </p>
+        )}
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Your role
+          </p>
+          <RoleSwitcher currentRole={userRow.role as "host" | "guest" | "dual"} />
+        </div>
+        <div className="mt-4 flex gap-2">
+          {profile && (
+            <Link
+              href="/profile/view"
+              className="tap-target inline-flex flex-1 items-center justify-center rounded-xl bg-navy-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-900"
+            >
+              View one-sheet
+            </Link>
+          )}
+          <Link
+            href="/profile/builder"
+            className="tap-target inline-flex flex-1 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 hover:bg-slate-50"
+          >
+            Edit profile
+          </Link>
+        </div>
+      </section>
 
       {(needsHostModule || needsGuestModule) && (
         <section
@@ -174,18 +254,20 @@ export default async function ProfileHomePage() {
         </section>
       )}
 
-      <section
-        aria-labelledby="role-heading"
-        className="rounded-2xl bg-white p-5 ring-1 ring-slate-200"
-      >
-        <h2 id="role-heading" className="text-lg font-semibold text-navy-900">
-          Your role
-        </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Change how you use GetOnShows any time.
-        </p>
-        <RoleSwitcher currentRole={userRow.role as "host" | "guest" | "dual"} />
+      <section aria-label="Your outreach activity" className="grid grid-cols-3 gap-3">
+        <StatCard label="Outreach sent" value={stats.pitchesSent} />
+        <StatCard label="Pitches left today" value={stats.quotaRemaining} />
+        <StatCard label="Bookings" value={stats.bookings} />
       </section>
+
+      <BadgeList badges={badges} />
+
+      {profile?.state === "published" && (
+        <ShareProfile
+          profileId={profile.id}
+          displayName={profile.display_name ?? "Member"}
+        />
+      )}
 
       {profile ? (
         <StateCard state={profile.state} completeness={profile.completeness} />
@@ -244,6 +326,7 @@ export default async function ProfileHomePage() {
 
       <section className="rounded-2xl bg-white p-5 ring-1 ring-slate-200">
         <h2 className="text-lg font-semibold text-navy-900">Account</h2>
+        <p className="mt-1 text-sm text-slate-600">{userRow.email}</p>
         <a
           href="/profile/export"
           download

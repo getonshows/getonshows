@@ -5,26 +5,15 @@ import { useRouter } from "next/navigation";
 import { switchRole } from "@/lib/actions";
 
 const OPTIONS = [
-  {
-    value: "host",
-    label: "Host",
-    blurb: "You run a show and browse guests to invite.",
-  },
-  {
-    value: "guest",
-    label: "Guest",
-    blurb: "You appear on shows and browse shows to pitch.",
-  },
-  {
-    value: "dual",
-    label: "Both",
-    blurb: "Unlocks the Guests / Shows toggle on Discover.",
-  },
+  { value: "host", label: "Host" },
+  { value: "guest", label: "Guest" },
+  { value: "dual", label: "Both" },
 ] as const;
 
 /**
  * Task 0: role switching. Server-validated; switching never deletes
  * profiles, conversations, or pitches: they stay on file and accessible.
+ * Rendered as a compact segmented tab control.
  */
 export default function RoleSwitcher({
   currentRole,
@@ -57,7 +46,11 @@ export default function RoleSwitcher({
 
   return (
     <div>
-      <div role="radiogroup" aria-label="Your role" className="mt-3 space-y-2">
+      <div
+        role="radiogroup"
+        aria-label="Your role"
+        className="mt-3 inline-flex rounded-full bg-slate-100 p-1 ring-1 ring-slate-200"
+      >
         {OPTIONS.map((opt) => {
           const active = opt.value === currentRole;
           return (
@@ -68,46 +61,32 @@ export default function RoleSwitcher({
               aria-checked={active}
               disabled={pending || active}
               onClick={() => onSwitch(opt.value)}
-              className={`tap-target w-full rounded-xl border p-4 text-left transition ${
+              className={`tap-target rounded-full px-5 py-2 text-sm font-semibold transition ${
                 active
-                  ? "border-brand bg-brand-light/40 ring-1 ring-brand"
-                  : "border-slate-300 bg-white hover:border-slate-400"
+                  ? "bg-navy-800 text-white shadow"
+                  : "text-slate-600 hover:text-navy-900"
               } disabled:cursor-default`}
             >
-              <span className="flex items-center justify-between">
-                <span className="font-semibold text-navy-900">{opt.label}</span>
-                {active && (
-                  <span className="rounded-full bg-brand px-2.5 py-0.5 text-xs font-bold text-white">
-                    Current
-                  </span>
-                )}
-              </span>
-              <span className="mt-1 block text-sm text-slate-600">
-                {opt.blurb}
-              </span>
+              {opt.label}
             </button>
           );
         })}
       </div>
       {pending && (
-        <p role="status" className="mt-3 text-sm text-slate-600">
+        <p role="status" className="mt-2 text-sm text-slate-600">
           Switching role…
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-3 text-sm font-medium text-red-700">
+        <p role="alert" className="mt-2 text-sm font-medium text-red-700">
           {error}
         </p>
       )}
       {notice && (
-        <p role="status" className="mt-3 text-sm font-medium text-green-800">
+        <p role="status" className="mt-2 text-sm font-medium text-green-800">
           {notice}
         </p>
       )}
-      <p className="mt-3 text-xs text-slate-500">
-        Switching never deletes anything. Your profiles, conversation threads,
-        and pitches stay exactly where they are.
-      </p>
     </div>
   );
 }

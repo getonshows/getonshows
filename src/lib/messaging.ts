@@ -379,7 +379,7 @@ export async function sendPitch(input: {
   if (!quota.allowed) {
     return {
       ok: false,
-      error: `You've used all ${quota.limit} pitches for this week. Your quota resets on ${formatReset(quota.resets_at)}.`,
+      error: `You've used all ${quota.limit} pitches for today. Your quota resets ${formatReset(quota.resets_at)}.`,
     };
   }
 

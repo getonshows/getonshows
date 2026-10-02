@@ -5,6 +5,7 @@ import { logServerEvent } from "@/lib/messaging";
 import OneSheet from "@/components/OneSheet";
 import PitchButton from "@/components/PitchButton";
 import SafetyActions from "@/components/SafetyActions";
+import { computeBadges } from "@/lib/badges";
 import type {
   GuestModuleRow,
   HostModuleRow,
@@ -61,11 +62,13 @@ export default async function DiscoverProfilePage({
     .maybeSingle();
   const role = ((userRow as { role: string } | null)?.role ?? "guest") as Role;
 
-  const [{ data: host }, { data: guest }, { data: pts }] = await Promise.all([
-    supabase.from("host_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
-    supabase.from("guest_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
-    supabase.from("profile_topics").select("topic_id").eq("profile_id", p.id),
-  ]);
+  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }] =
+    await Promise.all([
+      supabase.from("host_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
+      supabase.from("guest_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
+      supabase.from("profile_topics").select("topic_id").eq("profile_id", p.id),
+      supabase.rpc("profile_public_stats", { pid: p.id }),
+    ]);
   const hostModule = (host ?? null) as HostModuleRow | null;
   const guestModule = (guest ?? null) as GuestModuleRow | null;
 
@@ -88,6 +91,17 @@ export default async function DiscoverProfilePage({
     topics = (data ?? []) as TopicRow[];
   }
 
+  const s = (stats ?? null) as {
+    bookings: number;
+    pitches: number;
+    published: boolean;
+  } | null;
+  const badges = computeBadges({
+    published: true,
+    pitchesSent: s?.pitches ?? 0,
+    bookings: s?.bookings ?? 0,
+  }).filter((b) => b.earned);
+
   return (
     <div className="mx-auto max-w-xl space-y-5">
       <Link
@@ -102,6 +116,24 @@ export default async function DiscoverProfilePage({
         guestModule={guestModule}
         topics={topics}
       />
+      {badges.length > 0 && (
+        <section
+          aria-label="Achievements"
+          className="rounded-2xl bg-white p-5 ring-1 ring-slate-200"
+        >
+          <ul className="flex flex-wrap gap-2">
+            {badges.map((b) => (
+              <li
+                key={b.id}
+                title={b.description}
+                className="rounded-full border border-brand bg-brand-light/40 px-3 py-1.5 text-xs font-semibold text-navy-900"
+              >
+                ★ {b.label}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {asRole && p.user_id !== user.id && (
         <div className="rounded-2xl bg-white p-5 text-center shadow-sm">
           <PitchButton
@@ -111,7 +143,7 @@ export default async function DiscoverProfilePage({
             className="w-full py-3 text-base"
           />
           <p className="mt-2 text-xs text-slate-500">
-            3 pitches per week. Make each one count.
+            5 pitches per day. Make each one count.
           </p>
         </div>
       )}

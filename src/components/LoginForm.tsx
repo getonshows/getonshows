@@ -168,7 +168,7 @@ export default function LoginForm({ intent }: { intent: string | null }) {
           width={220}
           height={140}
           priority
-          className="mb-6 rounded-2xl bg-white px-6 py-3 shadow-md shadow-brand/10"
+          className="mb-6"
         />
         <h1 className="mt-3 text-3xl font-bold text-navy-900">
           Join GetOnShows

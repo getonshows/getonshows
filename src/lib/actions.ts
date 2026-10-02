@@ -11,6 +11,7 @@ import type {
   DraftInput,
   GuestModuleRow,
   HostModuleRow,
+  PitchQuotaStatus,
   ProfileRow,
   Role,
   RoleOrUndecided,
@@ -189,6 +190,54 @@ export interface ProfileHomeData {
   hasHostModule: boolean;
   hasGuestModule: boolean;
   topicCount: number;
+}
+
+export interface ProfileStats {
+  pitchesSent: number;
+  bookings: number;
+  quotaRemaining: number;
+  quotaLimit: number;
+}
+
+/** Outreach + booking counts for the signed-in user's own profile. */
+export async function loadProfileStats(): Promise<ProfileStats> {
+  const { supabase, user } = await authed();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const pid = (profile as { id: string } | null)?.id ?? null;
+
+  let pitchesSent = 0;
+  let bookings = 0;
+  if (pid) {
+    const [{ count: sent }, { count: booked }] = await Promise.all([
+      supabase
+        .from("conversations")
+        .select("id", { count: "exact", head: true })
+        .eq("pitched_by_profile_id", pid),
+      supabase
+        .from("conversations")
+        .select("id", { count: "exact", head: true })
+        .eq("state", "booked")
+        .or(`host_profile_id.eq.${pid},guest_profile_id.eq.${pid}`),
+    ]);
+    pitchesSent = sent ?? 0;
+    bookings = booked ?? 0;
+  }
+
+  const { data: quotaData } = await supabase.rpc("pitch_quota", {
+    consume: false,
+  });
+  const quota = (quotaData ?? null) as PitchQuotaStatus | null;
+
+  return {
+    pitchesSent,
+    bookings,
+    quotaRemaining: quota?.remaining ?? 0,
+    quotaLimit: quota?.limit ?? 5,
+  };
 }
 
 export async function loadProfileHome(): Promise<ProfileHomeData> {
