@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,14 @@ export default function LoginForm({ intent }: { intent: string | null }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [resending, setResending] = useState(false);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [pwMode, setPwMode] = useState<PwMode>("signin");
@@ -46,6 +54,46 @@ export default function LoginForm({ intent }: { intent: string | null }) {
       );
     } else {
       setStatus("sent");
+      setCooldown(60);
+    }
+  }
+
+  async function resendMagicLink() {
+    if (cooldown > 0 || resending) return;
+    const supabase = createClient();
+    setResending(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    setResending(false);
+    if (error) {
+      setStatus("error");
+      setMessage(
+        "We couldn't resend that link. Check the email address and try again."
+      );
+    } else {
+      setStatus("sent");
+      setCooldown(60);
+    }
+  }
+
+  async function resendSignupEmail() {
+    if (cooldown > 0 || resending) return;
+    const supabase = createClient();
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pwEmail.trim(),
+    });
+    setResending(false);
+    if (error) {
+      setPwStatus("error");
+      setPwMessage("We couldn't resend that link. Try again in a minute.");
+    } else {
+      setCooldown(60);
     }
   }
 
@@ -185,10 +233,16 @@ export default function LoginForm({ intent }: { intent: string | null }) {
           type="button"
           onClick={signInWithGoogle}
           disabled={status === "sending"}
-          className="tap-target mt-8 w-full rounded-xl border border-slate-300 bg-white px-6 font-semibold text-navy-900 transition hover:bg-slate-50 disabled:opacity-60"
+          className="tap-target relative mt-8 w-full rounded-xl border-2 border-navy-800 bg-white px-6 font-semibold text-navy-900 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
         >
           Continue with Google
+          <span className="absolute -top-3 right-4 rounded-full bg-brand px-2.5 py-0.5 text-xs font-bold text-white">
+            Fastest
+          </span>
         </button>
+        <p className="mt-2 text-center text-xs text-slate-500">
+          One tap, no waiting on an email.
+        </p>
 
         <div className="my-6 flex items-center gap-3 text-sm text-slate-500">
           <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
@@ -207,13 +261,27 @@ export default function LoginForm({ intent }: { intent: string | null }) {
               expires soon and works once. Open it on this device. Don&apos;t
               see it? Check your spam or promotions folder.
             </p>
-            <button
-              type="button"
-              onClick={() => setStatus("idle")}
-              className="tap-target mt-3 font-semibold text-brand-dark underline"
-            >
-              Use a different email
-            </button>
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+              <button
+                type="button"
+                onClick={resendMagicLink}
+                disabled={cooldown > 0 || resending}
+                className="tap-target font-semibold text-brand-dark underline disabled:text-slate-400 disabled:no-underline"
+              >
+                {resending
+                  ? "Sending…"
+                  : cooldown > 0
+                    ? `Resend link (${cooldown}s)`
+                    : "Resend link"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatus("idle")}
+                className="tap-target font-semibold text-brand-dark underline"
+              >
+                Use a different email
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={sendMagicLink} className="space-y-4">
@@ -235,6 +303,9 @@ export default function LoginForm({ intent }: { intent: string | null }) {
                 placeholder="you@example.com"
                 className="tap-target mt-1 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-900 placeholder:text-slate-400"
               />
+              <p className="mt-1 text-xs text-slate-500">
+                Use an inbox you can open on this device right now.
+              </p>
             </div>
             {status === "error" && (
               <p role="alert" className="text-sm font-medium text-red-700">
@@ -300,16 +371,30 @@ export default function LoginForm({ intent }: { intent: string | null }) {
                     with your new password. Don&apos;t see it? Check your spam
                     or promotions folder.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPwMode("signin");
-                      setPwStatus("idle");
-                    }}
-                    className="tap-target mt-3 text-sm font-semibold text-brand-dark underline"
-                  >
-                    Back to sign in
-                  </button>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <button
+                      type="button"
+                      onClick={resendSignupEmail}
+                      disabled={cooldown > 0 || resending}
+                      className="tap-target text-sm font-semibold text-brand-dark underline disabled:text-slate-400 disabled:no-underline"
+                    >
+                      {resending
+                        ? "Sending…"
+                        : cooldown > 0
+                          ? `Resend link (${cooldown}s)`
+                          : "Resend link"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPwMode("signin");
+                        setPwStatus("idle");
+                      }}
+                      className="tap-target text-sm font-semibold text-brand-dark underline"
+                    >
+                      Back to sign in
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={submitPassword} className="mt-4 space-y-4">
