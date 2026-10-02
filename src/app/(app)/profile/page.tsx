@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   loadProfileHome,
   loadProfileStats,
+  loadCollaborations,
   pauseProfile,
   resumeProfile,
   requestDeletion,
@@ -11,6 +12,7 @@ import {
 import { computeBadges } from "@/lib/badges";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import BadgeList from "@/components/BadgeList";
+import Collaborations from "@/components/Collaborations";
 import ShareProfile from "@/components/ShareProfile";
 
 function RoleBadge({ role }: { role: string }) {
@@ -129,6 +131,7 @@ export default async function ProfileHomePage() {
   const { userRow, profile, hasHostModule, hasGuestModule, topicCount } =
     await loadProfileHome();
   const stats = await loadProfileStats();
+  const collaborations = await loadCollaborations();
 
   // Task 0 edge: after switching to a role whose module was never started,
   // guide to the builder (link, never an auto-redirect).
@@ -255,6 +258,8 @@ export default async function ProfileHomePage() {
       </section>
 
       <BadgeList badges={badges} />
+
+      <Collaborations items={collaborations} />
 
       {profile?.state === "published" && (
         <ShareProfile

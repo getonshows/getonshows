@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import OneSheet from "@/components/OneSheet";
 import { computeBadges } from "@/lib/badges";
+import Collaborations from "@/components/Collaborations";
 import type {
+  Collaboration,
   GuestModuleRow,
   HostModuleRow,
   ProfileRow,
@@ -32,7 +34,7 @@ export default async function PublicProfilePage({
   const p = (profile ?? null) as ProfileRow | null;
   if (!p) notFound();
 
-  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }] =
+  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }] =
     await Promise.all([
       supabase
         .from("host_profiles")
@@ -46,6 +48,7 @@ export default async function PublicProfilePage({
         .maybeSingle(),
       supabase.from("profile_topics").select("topic_id").eq("profile_id", p.id),
       supabase.rpc("profile_public_stats", { pid: p.id }),
+      supabase.rpc("profile_collaborations", { pid: p.id }),
     ]);
   const hostModule = (host ?? null) as HostModuleRow | null;
   const guestModule = (guest ?? null) as GuestModuleRow | null;
@@ -73,6 +76,7 @@ export default async function PublicProfilePage({
     pitchesSent: s?.pitches ?? 0,
     bookings: s?.bookings ?? 0,
   }).filter((b) => b.earned);
+  const collaborations = ((collabs ?? []) as Collaboration[]);
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col bg-paper">
@@ -131,6 +135,8 @@ export default async function PublicProfilePage({
             )}
           </section>
         )}
+
+        <Collaborations items={collaborations} />
 
         <section className="rounded-2xl bg-navy-800 p-6 text-center text-white">
           <h2 className="text-xl font-bold">

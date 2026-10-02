@@ -89,6 +89,9 @@ export default function OneSheet({
             {profile.title && (
               <p className="mt-1 text-navy-100">{profile.title}</p>
             )}
+            {profile.location && (
+              <p className="mt-1 text-sm text-navy-200">📍 {profile.location}</p>
+            )}
           </div>
         </div>
         {profile.bio && (

@@ -19,6 +19,7 @@ interface SearchParams {
   medium?: string;
   session?: string;
   view?: string;
+  loc?: string;
 }
 
 interface ProfileJoinRow extends ProfileRow {
@@ -154,6 +155,7 @@ export default async function DiscoverPage({
   );
   const filterMedium = searchParams.medium ?? "";
   const filterSession = searchParams.session ?? "";
+  const filterLoc = (searchParams.loc ?? "").trim().toLowerCase();
 
   const candidates: Candidate[] = [];
   for (const r of allRows) {
@@ -191,6 +193,7 @@ export default async function DiscoverPage({
         r.display_name,
         r.title,
         r.bio,
+        r.location,
         r.host_profiles?.show_name,
         r.host_profiles?.guest_criteria,
         r.guest_profiles?.expertise,
@@ -201,6 +204,9 @@ export default async function DiscoverPage({
         .join(" ")
         .toLowerCase();
       if (!haystack.includes(q)) continue;
+    }
+    if (filterLoc && !(r.location ?? "").toLowerCase().includes(filterLoc)) {
+      continue;
     }
 
     candidates.push({
@@ -220,7 +226,11 @@ export default async function DiscoverPage({
 
   const anyEmbeddings = ranked.some((c) => c.usedEmbedding);
   const filtersActive =
-    q !== "" || filterTopicIds.size > 0 || filterMedium !== "" || filterSession !== "";
+    q !== "" ||
+    filterTopicIds.size > 0 ||
+    filterMedium !== "" ||
+    filterSession !== "" ||
+    filterLoc !== "";
 
   return (
     <div className="mx-auto max-w-xl space-y-5">

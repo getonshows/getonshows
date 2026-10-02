@@ -108,6 +108,7 @@ function initialDraft(data: BuilderData): DraftInput {
     photoUrl: p?.photo_url ?? "",
     links: padLinks(links, 3),
     timezone: p?.timezone ?? "",
+    location: p?.location ?? "",
     availabilityNotes: p?.availability_notes ?? "",
     availability: parseAvailability(p?.availability),
     host: {
@@ -487,6 +488,16 @@ export default function ProfileBuilder({ data }: { data: BuilderData }) {
                     <option value="__custom">{draft.timezone}</option>
                   )}
               </select>
+            </Field>
+            <Field label="Location" hint="City and state/province, so people nearby can find you.">
+              <TextInput
+                type="text"
+                value={draft.location}
+                onChange={(e) => set("location", e.target.value)}
+                placeholder="e.g. Toronto, ON"
+                maxLength={120}
+                autoComplete="address-level2"
+              />
             </Field>
             <div>
               <h2 className="text-sm font-semibold text-navy-900">Links</h2>

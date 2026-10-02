@@ -8,6 +8,7 @@ import { logServerEvent } from "@/lib/messaging";
 import { validatePublish, isUrl } from "@/lib/publish-validation";
 import type {
   BuilderData,
+  Collaboration,
   DraftInput,
   GuestModuleRow,
   HostModuleRow,
@@ -240,6 +241,20 @@ export async function loadProfileStats(): Promise<ProfileStats> {
   };
 }
 
+/** Booked collaborations for the signed-in user's own profile. */
+export async function loadCollaborations(): Promise<Collaboration[]> {
+  const { supabase, user } = await authed();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const pid = (profile as { id: string } | null)?.id ?? null;
+  if (!pid) return [];
+  const { data } = await supabase.rpc("profile_collaborations", { pid });
+  return ((data ?? []) as Collaboration[]);
+}
+
 export async function loadProfileHome(): Promise<ProfileHomeData> {
   const { supabase, user } = await authed();
   const userRow = await ensureUserRow(supabase, user);
@@ -378,6 +393,7 @@ export async function saveDraft(
         photo_url: input.photoUrl.trim().slice(0, 500) || null,
         links: toLinkArray(input.links),
         timezone: input.timezone.trim().slice(0, 80) || null,
+        location: input.location.trim().slice(0, 120) || null,
         availability_notes: input.availabilityNotes.trim().slice(0, 1000) || null,
         availability: sanitizeAvailability(input.availability),
         completeness,

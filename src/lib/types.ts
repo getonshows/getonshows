@@ -21,6 +21,7 @@ export interface ProfileRow {
   timezone: string | null;
   availability_notes: string | null;
   availability: Record<string, string[]> | null;
+  location: string | null;
   state: ProfileState;
   completeness: number;
   updated_at: string | null;
@@ -90,6 +91,7 @@ export interface DraftInput {
   photoUrl: string;
   links: { label: string; url: string }[];
   timezone: string;
+  location: string;
   availabilityNotes: string;
   /** Weekly grid: { "mon": ["09:00", ...], ... }. Slots hourly, 08:00–19:00. */
   availability: Record<string, string[]>;
@@ -202,4 +204,12 @@ export interface PitchContext {
   prefill?: PitchPrefill;
   targetProfileId?: string;
   asRole?: "host" | "guest";
+}
+
+export interface Collaboration {
+  profile_id: string;
+  display_name: string | null;
+  photo_url: string | null;
+  my_role: "host" | "guest";
+  booked_at: string | null;
 }

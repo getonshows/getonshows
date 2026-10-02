@@ -6,7 +6,9 @@ import OneSheet from "@/components/OneSheet";
 import PitchButton from "@/components/PitchButton";
 import SafetyActions from "@/components/SafetyActions";
 import { computeBadges } from "@/lib/badges";
+import Collaborations from "@/components/Collaborations";
 import type {
+  Collaboration,
   GuestModuleRow,
   HostModuleRow,
   ProfileRow,
@@ -62,12 +64,13 @@ export default async function DiscoverProfilePage({
     .maybeSingle();
   const role = ((userRow as { role: string } | null)?.role ?? "guest") as Role;
 
-  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }] =
+  const [{ data: host }, { data: guest }, { data: pts }, { data: stats }, { data: collabs }] =
     await Promise.all([
       supabase.from("host_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
       supabase.from("guest_profiles").select("*").eq("profile_id", p.id).maybeSingle(),
       supabase.from("profile_topics").select("topic_id").eq("profile_id", p.id),
       supabase.rpc("profile_public_stats", { pid: p.id }),
+      supabase.rpc("profile_collaborations", { pid: p.id }),
     ]);
   const hostModule = (host ?? null) as HostModuleRow | null;
   const guestModule = (guest ?? null) as GuestModuleRow | null;
@@ -101,6 +104,7 @@ export default async function DiscoverProfilePage({
     pitchesSent: s?.pitches ?? 0,
     bookings: s?.bookings ?? 0,
   }).filter((b) => b.earned);
+  const collaborations = ((collabs ?? []) as Collaboration[]);
 
   return (
     <div className="mx-auto max-w-xl space-y-5">
@@ -134,6 +138,7 @@ export default async function DiscoverProfilePage({
           </ul>
         </section>
       )}
+      <Collaborations items={collaborations} />
       {asRole && p.user_id !== user.id && (
         <div className="rounded-2xl bg-white p-5 text-center shadow-sm">
           <PitchButton

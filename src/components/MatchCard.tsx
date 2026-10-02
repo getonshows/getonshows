@@ -69,6 +69,9 @@ export default function MatchCard({
           {headline && (
             <p className="truncate text-sm text-slate-600">{headline}</p>
           )}
+          {p.location && (
+            <p className="truncate text-sm text-slate-500">📍 {p.location}</p>
+          )}
           {formatBits.length > 0 && (
             <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-slate-500">
               {formatBits.filter(Boolean).join(" · ")}

@@ -20,6 +20,7 @@ export default function DiscoveryFilters({
   const params = useSearchParams();
 
   const [query, setQuery] = useState(params.get("q") ?? "");
+  const [locQuery, setLocQuery] = useState(params.get("loc") ?? "");
 
   function update(next: Record<string, string | null>) {
     const sp = new URLSearchParams(params.toString());
@@ -42,23 +43,33 @@ export default function DiscoveryFilters({
   );
   const hasFilters =
     query !== "" ||
+    locQuery !== "" ||
     selectedTopics.size > 0 ||
     params.get("medium") ||
     params.get("session");
 
   function clearAll() {
     setQuery("");
-    update({ q: null, topics: null, medium: null, session: null });
+    setLocQuery("");
+    update({ q: null, loc: null, topics: null, medium: null, session: null });
   }
 
-  // Debounce the keyword search so we don't re-render on every keystroke.
+  // Debounce the text searches so we don't re-render on every keystroke.
   const [debounce, setDebounce] = useState<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const [locDebounce, setLocDebounce] = useState<ReturnType<typeof setTimeout> | null>(
     null
   );
   function onQueryChange(value: string) {
     setQuery(value);
     if (debounce) clearTimeout(debounce);
     setDebounce(setTimeout(() => update({ q: value || null }), 500));
+  }
+  function onLocChange(value: string) {
+    setLocQuery(value);
+    if (locDebounce) clearTimeout(locDebounce);
+    setLocDebounce(setTimeout(() => update({ loc: value || null }), 500));
   }
 
   return (
@@ -70,6 +81,19 @@ export default function DiscoveryFilters({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search names, shows, expertise…"
+          className="tap-target w-full rounded-xl bg-white px-4 text-navy-900 ring-1 ring-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-800"
+        />
+      </label>
+
+      <label className="block">
+        <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Location
+        </span>
+        <input
+          type="search"
+          value={locQuery}
+          onChange={(e) => onLocChange(e.target.value)}
+          placeholder="Filter by city or state…"
           className="tap-target w-full rounded-xl bg-white px-4 text-navy-900 ring-1 ring-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-800"
         />
       </label>
