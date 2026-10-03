@@ -125,6 +125,31 @@ export default async function DiscoverPage({
     )
   );
 
+  // Profiles the viewer has already contacted (a conversation exists with
+  // them on either side) never appear in Discover again. They live in the inbox.
+  const { data: convoRows } = await supabase
+    .from("conversations")
+    .select("host_profile_id, guest_profile_id")
+    .or(`host_profile_id.eq.${viewer.id},guest_profile_id.eq.${viewer.id}`);
+  const contactedProfileIds = new Set(
+    ((convoRows ?? []) as { host_profile_id: string; guest_profile_id: string }[]).map(
+      (c) => (c.host_profile_id === viewer.id ? c.guest_profile_id : c.host_profile_id)
+    )
+  );
+
+  // Profiles already shown to this viewer, with when they were last shown.
+  // Browsing (no filters) prefers unseen profiles and backfills the
+  // longest-unseen ones only when fresh faces run out.
+  const { data: impressionRows } = await supabase
+    .from("discovery_impressions")
+    .select("profile_id, viewed_at")
+    .eq("viewer_user_id", user.id);
+  const seenAt = new Map(
+    ((impressionRows ?? []) as { profile_id: string; viewed_at: string }[]).map(
+      (r) => [r.profile_id, r.viewed_at]
+    )
+  );
+
   // Candidates: published profiles carrying the complementary module.
   const { data: rows } = await supabase
     .from("profiles")
@@ -135,7 +160,8 @@ export default async function DiscoverPage({
   const allRows = ((rows ?? []) as ProfileJoinRow[]).filter(
     (r) =>
       (viewing === "guests" ? r.guest_profiles : r.host_profiles) &&
-      !blockedUserIds.has(r.user_id)
+      !blockedUserIds.has(r.user_id) &&
+      !contactedProfileIds.has(r.id)
   );
 
   const { data: viewerPts } = await supabase
@@ -222,7 +248,7 @@ export default async function DiscoverPage({
     viewerProfile: viewer,
     viewerTopics,
     candidates,
-    limit: 20,
+    limit: 200,
   });
 
   const anyEmbeddings = ranked.some((c) => c.usedEmbedding);
@@ -232,6 +258,37 @@ export default async function DiscoverPage({
     filterMedium !== "" ||
     filterSession !== "" ||
     filterLoc !== "";
+
+  // Freshness: when browsing (no filters/search), unseen profiles come first.
+  // Seen profiles backfill oldest-first only when unseen faces run out, so the
+  // page never goes empty but repeat logins feel new. Filtered searches are
+  // intentional lookups, so they show every match.
+  let visible = ranked.slice(0, 20);
+  let backfilled = false;
+  if (!filtersActive) {
+    const unseen = ranked.filter((m) => !seenAt.has(m.profile.id));
+    const seen = ranked
+      .filter((m) => seenAt.has(m.profile.id))
+      .sort(
+        (a, b) =>
+          +new Date(seenAt.get(a.profile.id)!) -
+          +new Date(seenAt.get(b.profile.id)!)
+      );
+    backfilled = unseen.length < 20 && seen.length > 0;
+    visible = [...unseen, ...seen].slice(0, 20);
+  }
+
+  // Record what was shown so the next visit rotates to new faces.
+  if (visible.length > 0) {
+    await supabase.from("discovery_impressions").upsert(
+      visible.map((m) => ({
+        viewer_user_id: user.id,
+        profile_id: m.profile.id,
+        viewed_at: new Date().toISOString(),
+      })),
+      { onConflict: "viewer_user_id,profile_id" }
+    );
+  }
 
   return (
     <div className="mx-auto max-w-xl space-y-5">
@@ -273,7 +330,7 @@ export default async function DiscoverPage({
         />
       </Suspense>
 
-      {ranked.length === 0 ? (
+      {visible.length === 0 ? (
         <EmptyState
           title="No matches yet"
           body={
@@ -285,13 +342,15 @@ export default async function DiscoverPage({
       ) : (
         <>
           <p className="text-sm text-slate-500" role="status">
-            {ranked.length} {ranked.length === 1 ? "match" : "matches"}
+            {visible.length} {visible.length === 1 ? "match" : "matches"}
             {anyEmbeddings
               ? " · ranked with AI similarity"
               : " · ranked by topics & fit"}
+            {!filtersActive && !backfilled && " · fresh picks"}
+            {!filtersActive && backfilled && " · fresh picks first"}
           </p>
           <div className="space-y-4">
-            {ranked.map((m) => (
+            {visible.map((m) => (
               <MatchCard
                 key={m.profile.id}
                 match={m}
